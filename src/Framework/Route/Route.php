@@ -16,6 +16,7 @@ class Route
     protected $controller;
     protected $action;
     protected $viewClass;
+    protected $templateFile;
 
     /**
      * Route constructor.
@@ -25,14 +26,16 @@ class Route
      * @param string $controller
      * @param string $action
      * @param string $viewClass
+     * @param string $templateFile
      */
-    public function __construct($uri = null, $method = null, $controller = null, $action = null, $viewClass = null)
+    public function __construct($uri = null, $method = null, $controller = null, $action = null, $viewClass = null, $templateFile = null)
     {
         $this->uri = $uri ?: null;
         $this->method = $method ?: null;
         $this->controller = $controller ?: null;
         $this->action = $action ?: null;
         $this->viewClass = $viewClass ?: null;
+        $this->templateFile = $templateFile ?: null;
     }
 
     /**
@@ -113,5 +116,32 @@ class Route
     public function setViewClass($viewClass)
     {
         $this->viewClass = $viewClass;
+    }
+
+    /**
+     * @return null
+     */
+    public function getTemplateFile()
+    {
+        return $this->templateFile;
+    }
+
+    /**
+     * @param null $templateFile
+     */
+    public function setTemplateFile($templateFile)
+    {
+        $this->templateFile = $templateFile;
+    }
+
+    public function toArray(){
+        return [
+            "uri"               => $this->getUri(),
+            "method"            => $this->getMethod(),
+            "controller"        => $this->getController(),
+            "action"            => $this->getAction(),
+            "viewClass"         => $this->getViewClass(),
+            "templateFile"      => $this->getTemplateFile(),
+        ];
     }
 }

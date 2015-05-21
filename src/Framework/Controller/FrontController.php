@@ -12,10 +12,12 @@ namespace Framework\Controller;
 use FastRoute\RouteCollector;
 use Framework\Request\Filter\FilterManagerTrait;
 use Framework\Route\Route;
+use Framework\View\TemplateView\SimpleFileBasedTemplateView;
 use Framework\View\TemplateView\SimpleJSONTemplateView;
+use Framework\View\TemplateView\TemplateViewInterface;
 use Symfony\Component\HttpFoundation\Request;
 
-class FrontController implements ControllerInterface
+final class FrontController implements ControllerInterface
 {
     use RequestResponseTrait;
     use FilterManagerTrait;
@@ -28,6 +30,8 @@ class FrontController implements ControllerInterface
     /** @var  ControllerInterface $controller */
     private $controller;
 
+    private static $rootPath;
+
     private static $httpMethods = [
         "GET",
         "PUT",
@@ -39,6 +43,17 @@ class FrontController implements ControllerInterface
         "CONNECT",
         "OPTIONS",
     ];
+
+    public static function getRootPath(){
+        if(defined("PILLOW_ROOT_PATH")){
+            self::$rootPath = PILLOW_ROOT_PATH;
+        } else if(!isset(self::$rootPath)){
+            $path = explode(DIRECTORY_SEPARATOR, __DIR__);
+            while(array_pop($path) !== 'src');
+            self::$rootPath = implode(DIRECTORY_SEPARATOR, $path);
+        }
+        return self::$rootPath;
+    }
 
     private $routes;
 
@@ -96,15 +111,25 @@ class FrontController implements ControllerInterface
                 if (!method_exists($this->controller, $route["action"])) {
                     throw new \Exception("Invalid controller method: {$route["action"]}");
                 }
-                $this->route = new Route($route["uri"], $this->request->getMethod(), $route["controller"], $route["action"]);
+                if(!isset($route["templateFile"])){
+                    $route["templateFile"] = null;
+                }
+                if(!isset($route["viewClass"])){
+                    $route["viewClass"] = SimpleFileBasedTemplateView::class;
+                }
+                $this->route = new Route($route["uri"], $this->request->getMethod(), $route["controller"], $route["action"], $route["viewClass"], $route["templateFile"]);
                 break;
             default:
                 throw new \Exception("An unknown error has occurred!");
         }
 
         $data = $this->controller->{$this->route->getAction()}();
-        $templateClass = $this->route->getViewClass() ?: SimpleJSONTemplateView::class;
-        $template = new $templateClass();
+        $templateClass = $this->route->getViewClass();
+        $template = new $templateClass($this->route->toArray());
+        if(!$template instanceof TemplateViewInterface){
+            throw new \Exception("Invalid template class.  Class must be an instance of ".TemplateViewInterface::class);
+        }
+
         $template->render($data);
     }
 

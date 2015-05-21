@@ -10,6 +10,7 @@ return [
             "POST",
         ],
         "controller"    => TestController::class,
+        "templateFile"      => "example/view/jsonTemplate.php"
     ],
     [
         "uri"           => '/testing2',
@@ -18,5 +19,6 @@ return [
             "POST",
         ],
         "controller"    => TestController::class,
+        "templateFile"      => "example/view/testTemplate.html"
     ],
 ];

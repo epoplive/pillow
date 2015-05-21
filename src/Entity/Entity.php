@@ -224,7 +224,6 @@ abstract class Entity {
                             });
                         }
                     }
-//                    var_dump("setting isId true from @Column");
                     $isId = true;
                 }
                 $isTableProp = true;

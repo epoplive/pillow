@@ -12,6 +12,8 @@ use Framework\Controller\AbstractBaseController;
 class TestController extends AbstractBaseController
 {
     public function get(){
-        var_dump("some shit");
+        return [
+            "result" => " goes in here man."
+        ];
     }
 }
