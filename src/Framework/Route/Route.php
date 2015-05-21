@@ -1,0 +1,117 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: bthomas
+ * Date: 5/20/15
+ * Time: 4:50 PM
+ */
+
+namespace Framework\Route;
+
+
+class Route
+{
+    protected $uri;
+    protected $method;
+    protected $controller;
+    protected $action;
+    protected $viewClass;
+
+    /**
+     * Route constructor.
+     *
+     * @param string $uri
+     * @param string $method
+     * @param string $controller
+     * @param string $action
+     * @param string $viewClass
+     */
+    public function __construct($uri = null, $method = null, $controller = null, $action = null, $viewClass = null)
+    {
+        $this->uri = $uri ?: null;
+        $this->method = $method ?: null;
+        $this->controller = $controller ?: null;
+        $this->action = $action ?: null;
+        $this->viewClass = $viewClass ?: null;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getUri()
+    {
+        return $this->uri;
+    }
+
+    /**
+     * @param mixed $uri
+     */
+    public function setUri($uri)
+    {
+        $this->uri = $uri;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getAction()
+    {
+        return $this->action;
+    }
+
+    /**
+     * @param mixed $action
+     */
+    public function setAction($action)
+    {
+        $this->action = $action;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getMethod()
+    {
+        return $this->method;
+    }
+
+    /**
+     * @param mixed $method
+     */
+    public function setMethod($method)
+    {
+        $this->method = $method;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getController()
+    {
+        return $this->controller;
+    }
+
+    /**
+     * @param mixed $controller
+     */
+    public function setController($controller)
+    {
+        $this->controller = $controller;
+    }
+
+    /**
+     * @return null
+     */
+    public function getViewClass()
+    {
+        return $this->viewClass;
+    }
+
+    /**
+     * @param null $viewClass
+     */
+    public function setViewClass($viewClass)
+    {
+        $this->viewClass = $viewClass;
+    }
+}

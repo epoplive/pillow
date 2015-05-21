@@ -1,0 +1,30 @@
+{
+    "name": "epoplive/pillow",
+    "type": "library",
+    "description": ";)",
+    "keywords": ["pillow", "framework", "rest"],
+    "authors": [
+        {
+            "name": "Brett Thomas",
+            "email": "brett.thomas@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.6.0",
+        "doctrine/orm": "2.4.*",
+        "symfony/http-foundation": "^2.6",
+        "nikic/fast-route": "^0.4.0",
+        "zendframework/zend-json": "~2.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "": "src"
+        },
+        "include-path": [
+            "."
+        ]
+    },
+    "config": {
+        "use-include-path": true
+    }
+}
