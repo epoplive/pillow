@@ -1,2 +1,2 @@
 # pillow
-simple, modern PHP Rest based API framework
+a simple and modern PHP web micro framework utilizing well written composer packages and proven design patterns
