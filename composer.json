@@ -1,25 +1,29 @@
 {
-    "name": "epoplive/pillow",
-    "type": "library",
-    "description": ";)",
-    "keywords": ["pillow", "framework", "rest"],
-    "authors": [
-        {
-            "name": "Brett Thomas",
-            "email": "brett.thomas@gmail.com"
-        }
-    ],
-    "require": {
-        "php": ">=5.6.0",
-        "doctrine/orm": "~2.5",
-        "symfony/http-foundation": "^2.6",
-        "nikic/fast-route": "^0.4.0",
-        "zendframework/zend-json": "~2.4",
-        "jms/serializer": "0.16.*"
-    },
-    "autoload": {
-        "psr-4": {
-            "": "src"
-        }
+  "name": "epoplive/pillow",
+  "type": "library",
+  "description": ";)",
+  "keywords": [
+    "pillow",
+    "framework",
+    "rest"
+  ],
+  "authors": [
+    {
+      "name": "Brett Thomas",
+      "email": "brett.thomas@gmail.com"
     }
+  ],
+  "require": {
+    "php": ">=5.6.0",
+    "doctrine/orm": "~2.5",
+    "symfony/http-foundation": "^2.6",
+    "nikic/fast-route": "^0.4.0",
+    "zendframework/zend-json": "~2.4",
+    "jms/serializer": "0.16.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "": "src"
+    }
+  }
 }
