@@ -20,12 +20,6 @@
     "autoload": {
         "psr-4": {
             "": "src"
-        },
-        "include-path": [
-            "."
-        ]
-    },
-    "config": {
-        "use-include-path": true
+        }
     }
 }
