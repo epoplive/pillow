@@ -7,17 +7,17 @@
 namespace Framework\View\TemplateView;
 
 
-class SimpleFileBasedTemplateView extends AbstractBaseTemplateView
+class SimpleFileBasedTemplateView extends AbstractBaseFileTemplateView
 {
     /**
      * Render the view into a string and return for output
      *
-     * @param null|Array $input
+     * @param mixed $input
      * @return string
      */
-    public function render(Array $input = null)
+    public function render($input = null)
     {
-        return $this->renderScoped($this->getTemplatePath(), $input);
+        return $this->renderScoped($this->getTemplatePath(), (array)$input);
     }
 
 }

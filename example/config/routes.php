@@ -1,6 +1,7 @@
 <?php
 include_once __DIR__."/../../vendor/autoload.php";
 use Controller\TestController;
+use Framework\View\TemplateView\DoctrineAnnotationTemplateView;
 
 return [
     [
@@ -20,5 +21,14 @@ return [
         ],
         "controller"    => TestController::class,
         "templateFile"      => "example/view/testTemplate.html"
+    ],
+    [
+        "uri"           => '/testing3',
+        "methods"       => [
+            "GET" => "testing3",
+            "POST",
+        ],
+        "controller"    => TestController::class,
+        "viewClass"     => DoctrineAnnotationTemplateView::class,
     ],
 ];

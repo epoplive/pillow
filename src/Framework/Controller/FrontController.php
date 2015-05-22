@@ -10,12 +10,14 @@ namespace Framework\Controller;
 
 
 use FastRoute\RouteCollector;
+use Framework\Request\Filter\FilterChain;
 use Framework\Request\Filter\FilterManagerTrait;
 use Framework\Route\Route;
 use Framework\View\TemplateView\SimpleFileBasedTemplateView;
 use Framework\View\TemplateView\SimpleJSONTemplateView;
 use Framework\View\TemplateView\TemplateViewInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 final class FrontController implements ControllerInterface
 {
@@ -60,6 +62,7 @@ final class FrontController implements ControllerInterface
     private function __construct(Array $routes)
     {
         $this->routes = $routes;
+        $this->filterChain = new FilterChain();
     }
 
     private function __clone()
@@ -104,10 +107,25 @@ final class FrontController implements ControllerInterface
                     throw new \Exception("Invalid controller class!");
                 }
 
+
                 $this->controller = new $route["controller"]($this->request);
-                if (!isset($route["action"])) {
-                    $route["action"] = strtolower($this->request->getMethod());
+                if(array_key_exists("methods", $route)){ // clean up the method names in the route array so we don't have to worry about case
+                    $newMethods = [];
+                    foreach($route["methods"] as $key => $value){
+                        if(in_array(strtoupper($key), self::$httpMethods)){
+                            $newMethods[strtoupper($key)] = $value;
+                        } else if(in_array(strtoupper($value), self::$httpMethods)){
+                            $newMethods[] = $value;
+                        }
+                    }
+                    $route["methods"] = $newMethods;
                 }
+                if (array_key_exists(strtoupper($this->request->getMethod()), $route["methods"])) {
+                    $route["action"] = $route["methods"][strtoupper($this->request->getMethod())];
+                } else if(in_array(strtoupper($this->request->getMethod()), $route["methods"])){
+                    $route["action"] = strtolower($this->request->getMethod())."Action";
+                }
+
                 if (!method_exists($this->controller, $route["action"])) {
                     throw new \Exception("Invalid controller method: {$route["action"]}");
                 }
@@ -123,14 +141,18 @@ final class FrontController implements ControllerInterface
                 throw new \Exception("An unknown error has occurred!");
         }
 
+        $this->filterRequest($this->request);
+
         $data = $this->controller->{$this->route->getAction()}();
         $templateClass = $this->route->getViewClass();
         $template = new $templateClass($this->route->toArray());
         if(!$template instanceof TemplateViewInterface){
             throw new \Exception("Invalid template class.  Class must be an instance of ".TemplateViewInterface::class);
         }
+        $content = $template->render($data);
+        $response = new Response($content, 200);
+        return $response;
 
-        $template->render($data);
     }
 
 

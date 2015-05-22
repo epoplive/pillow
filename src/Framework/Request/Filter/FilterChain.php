@@ -47,7 +47,9 @@ class FilterChain
             $filter->execute($request);
         }
 
-        $this->target->execute($request);
+        if($this->target){
+            $this->target->execute($request);
+        }
     }
 
     /**

@@ -23,7 +23,7 @@ interface TemplateViewInterface
     public function getInput();
 
     /**
-     * @param Array $input
+     * @param mixed $input
      */
     public function setInput($input = null);
 
@@ -40,8 +40,8 @@ interface TemplateViewInterface
     /**
      * Render the view into a string and return for output
      *
-     * @param null|Array $input
+     * @param mixed $input
      * @return string
      */
-    public function render(Array $input = null);
+    public function render($input = null);
 }
