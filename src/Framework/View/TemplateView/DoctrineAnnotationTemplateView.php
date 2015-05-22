@@ -12,10 +12,11 @@ use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\AnnotationRegistry;
 
 use Framework\Controller\FrontController;
+use JMS\Serializer\SerializationContext;
 use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializerBuilder;
 
-$conf = Setup::createAnnotationMetadataConfiguration(array(__DIR__."/src"), true);
+$conf = Setup::createAnnotationMetadataConfiguration([__DIR__."/src"], true);
 $driver = new AnnotationDriver(new AnnotationReader());
 
 // registering noop annotation autoloader - allow all annotations by default
@@ -55,7 +56,9 @@ class DoctrineAnnotationTemplateView extends AbstractBaseTemplateView
      */
     public function render($input = null)
     {
-        return $this->serializer->serialize($input, $this->format);
+        $context = new SerializationContext();
+        $context->setSerializeNull(true);
+        return $this->serializer->serialize($input, $this->format, $context);
     }
 
 }

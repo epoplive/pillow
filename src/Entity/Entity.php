@@ -12,11 +12,18 @@ namespace Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManager;
 use ReflectionClass;
+use JMS\Serializer\Annotation;
 
 abstract class Entity {
-    /** @var EntityManager $em */
+    /**
+     * @Annotation\Exclude
+     * @var EntityManager $em
+     */
     protected static $em;
+    /** @Annotation\Exclude */
     protected static $db;
+    /** @Annotation\Exclude */
+    protected static $tableDescription = null;
 
     /**
      * Entity constructor.
@@ -176,7 +183,6 @@ abstract class Entity {
         return array_intersect_key(static::getAnnotatedDescribe()["describe"], array_flip(static::getAnnotatedDescribe()["id"]));
     }
 
-    protected static $tableDescription = null;
     public static function getAnnotatedDescribe(){
         if(static::$tableDescription){
             return static::$tableDescription;
