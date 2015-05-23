@@ -31,7 +31,9 @@ final class FrontController implements ControllerInterface
     private $route;
     /** @var  ControllerInterface $controller */
     private $controller;
-
+    /** @var  User $currentUser */
+    private $currentUser;
+    /** @var  string $rootPath */
     private static $rootPath;
 
     private static $httpMethods = [
@@ -68,6 +70,22 @@ final class FrontController implements ControllerInterface
     private function __clone()
     {
 
+    }
+
+    /**
+     * @return User
+     */
+    public function getCurrentUser()
+    {
+        return $this->currentUser;
+    }
+
+    /**
+     * @param User $currentUser
+     */
+    public function setCurrentUser($currentUser)
+    {
+        $this->currentUser = $currentUser;
     }
 
     public function execute(Request $request){
@@ -166,20 +184,18 @@ final class FrontController implements ControllerInterface
     }
 
     /**
-     * @return RouteCollector
+     * @return Route
      */
-    public function getRouteCollector()
+    public function getRoute()
     {
-        return $this->routeCollector;
+        return $this->route;
     }
 
     /**
-     * @param RouteCollector $routeCollector
+     * @param Route $route
      */
-    public function setRouteCollector($routeCollector)
+    public function setRoute($route)
     {
-        $this->routeCollector = $routeCollector;
+        $this->route = $route;
     }
-
-
 }
