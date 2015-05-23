@@ -41,6 +41,8 @@ final class FrontController implements ControllerInterface
 
     private $viewHandler;
 
+    public static $routesFile = "config/routes.php";
+
     private static $httpMethods = [
         "GET",
         "PUT",
@@ -53,6 +55,31 @@ final class FrontController implements ControllerInterface
         "OPTIONS",
     ];
 
+    private $routes;
+
+    private function __construct(Array $routes)
+    {
+        $this->setRoutes($routes);
+        $this->filterChain = new FilterChain();
+    }
+
+    private function __clone(){}
+
+    public static function getInstance()
+    {
+        if (!static::$instance) {
+            if(stream_resolve_include_path(static::$routesFile) === false){
+                throw new \Exception("Unable to load routes file from include path.");
+            }
+            $routes = include static::$routesFile;
+            if(empty($routes)){
+                throw new \Exception("No routes found!");
+            }
+            static::$instance = new FrontController($routes);
+        }
+        return static::$instance;
+    }
+
     public static function getRootPath(){
         if(defined("PILLOW_ROOT_PATH")){
             self::$rootPath = PILLOW_ROOT_PATH;
@@ -62,19 +89,6 @@ final class FrontController implements ControllerInterface
             self::$rootPath = implode(DIRECTORY_SEPARATOR, $path);
         }
         return self::$rootPath;
-    }
-
-    private $routes;
-
-    private function __construct(Array $routes)
-    {
-        $this->routes = $routes;
-        $this->filterChain = new FilterChain();
-    }
-
-    private function __clone()
-    {
-
     }
 
     /**
@@ -299,15 +313,6 @@ final class FrontController implements ControllerInterface
         $this->controller = $controller;
     }
 
-    public static function getInstance()
-    {
-        if (!static::$instance) {
-            $routes = include "config/routes.php";
-            static::$instance = new FrontController($routes);
-        }
-        return static::$instance;
-    }
-
     /**
      * @return Route
      */
@@ -322,5 +327,21 @@ final class FrontController implements ControllerInterface
     public function setRoute($route)
     {
         $this->route = $route;
+    }
+
+    /**
+     * @return array
+     */
+    public function getRoutes()
+    {
+        return $this->routes;
+    }
+
+    /**
+     * @param array $routes
+     */
+    public function setRoutes($routes)
+    {
+        $this->routes = $routes;
     }
 }
