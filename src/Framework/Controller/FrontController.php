@@ -288,10 +288,10 @@ final class FrontController implements ControllerInterface
                                 if (is_array($out)) {
                                     foreach ($out as $filterName) {
                                         if ($filterName instanceof FilterInterface) {
-                                            $this->addFilter($filterName, 0);
+                                            $this->addFilter($filterName);
                                         } else {
                                             if (is_a($filterName, FilterInterface::class, true)) {
-                                                $this->addFilter(new $filterName(), 0);
+                                                $this->addFilter(new $filterName());
                                             }
                                         }
                                     }
@@ -299,10 +299,10 @@ final class FrontController implements ControllerInterface
                             } else {
                                 if (is_array($reqFilter) || is_object($reqFilter)) {
                                     foreach ($reqFilter as $filter) {
-                                        $this->addFilter(new $filter(), 0);
+                                        $this->addFilter(new $filter());
                                     }
                                 } else {
-                                    $this->addFilter(new $reqFilter(), 0);
+                                    $this->addFilter(new $reqFilter());
                                 }
                             }
                         }
