@@ -13,11 +13,17 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManager;
 use ReflectionClass;
 use JMS\Serializer\Annotation;
+use JMS\Serializer\Annotation\ExclusionPolicy;
+use Doctrine\ORM\Mapping as ORM;
 
-abstract class Entity {
+/**
+ * @ExclusionPolicy("all")
+ */
+abstract class Entity implements EntityInterface
+{
     /**
-     * @Annotation\Exclude
      * @var EntityManager $em
+     * @Annotation\Exclude
      */
     protected static $em;
     /** @Annotation\Exclude */
@@ -62,9 +68,9 @@ abstract class Entity {
         }
     }
 
-    public function save()
+    public function save($cascade = true)
     {
-        $values = $this->getTableArray();
+        $values = $this->getTableArray(true);
         if($this->recordExists()){  //do an update
             $sql = "UPDATE ".static::getAnnotatedDescribe()["table"]." SET ";
             array_walk($values, function(&$value, $column){
@@ -82,17 +88,30 @@ abstract class Entity {
         $this->entitySaveHook($sql);
         $stmt = static::getEm()->getConnection()->prepare($sql);
         $stmt->execute();
+        $this->exchangeArray($this->getLastInsertIds());
 
-        foreach(static::getAnnotatedDescribe()["relations"] as $fieldName){
-            $val = $this->getViaGetter($fieldName);
-            if($val instanceof Entity){
-                $val->save();
-            } else if($val instanceof ArrayCollection){
-                foreach($val as $item){
-                    $item->save();
+        if($cascade) {
+            foreach (static::getAnnotatedDescribe()["relations"] as $fieldName) {
+                $val = $this->getViaGetter($fieldName);
+                if ($val instanceof Entity) {
+                    $val->save();
+                } else if ($val instanceof ArrayCollection) {
+                    foreach ($val as $item) {
+                        $item->save();
+                    }
                 }
             }
         }
+    }
+
+    protected function getLastInsertIds(){
+        $items = array_filter(static::getAnnotatedDescribe()["describe"], function($var){
+            return isset($var->generatedValueStrategy) && strtoupper($var->generatedValueStrategy) === "SEQUENCE";
+        });
+        array_walk($items, function(&$item, $key){
+            $item = static::$em->getConnection()->lastInsertId($item->sequenceGenerator->sequenceName);
+        });
+        return $items;
     }
 
     //override this if you need to do something with the raw save sql query (for instance add the listing id
@@ -105,6 +124,9 @@ abstract class Entity {
     }
 
     public function recordExists(){
+        if(!$this->hasPKValues()){
+            return false;
+        }
         $sql = "SELECT COUNT(*) FROM ".static::getAnnotatedDescribe()["table"]." WHERE ".$this->generatedPKCheckSQL();
         $stmt = static::getEm()->getConnection()->prepare($sql);
         $stmt->execute();
@@ -117,6 +139,24 @@ abstract class Entity {
             $value = "{$key}={$this->getSQLValue($key)}";
         });
         return "(".implode(" AND ", $out).")";
+    }
+
+    protected function hasPKValues(){
+        foreach($this->getKey() as $key => $value){
+            if($value === false || $value === null){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    protected function clearEmptyPK(Array $values){
+        foreach($this->getKey() as $key => $value){
+            if($values[$key] === false || $values[$key] === null){
+                unset($values[$key]);
+            }
+        }
+        return $values;
     }
 
     protected function getSQLValue($fieldName){
@@ -155,10 +195,13 @@ abstract class Entity {
         };
     }
 
-    public function getTableArray(){
+    public function getTableArray($clearEmptyPrimaryKeys = false){
         $out = [];
         foreach(static::getAnnotatedDescribe()["describe"] as $fieldName => $field){
             $out[$fieldName] = $this->getViaGetter($fieldName);
+        }
+        if($clearEmptyPrimaryKeys){
+            $out = $this->clearEmptyPK($out);
         }
         return $out;
     }
@@ -281,4 +324,6 @@ abstract class Entity {
         static::$tableDescription = $return;
         return static::$tableDescription;
     }
+
+
 }

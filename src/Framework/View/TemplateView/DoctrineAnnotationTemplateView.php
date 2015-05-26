@@ -58,6 +58,8 @@ class DoctrineAnnotationTemplateView extends AbstractBaseTemplateView
     {
         $context = new SerializationContext();
         $context->setSerializeNull(true);
+        $context->enableMaxDepthChecks();
+        FrontController::getInstance()->getResponse()->headers->set('Content-Type', 'application/json');
         return $this->serializer->serialize($input, $this->format, $context);
     }
 

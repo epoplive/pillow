@@ -10,13 +10,20 @@ namespace Framework\Controller;
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use JMS\Serializer\Annotation;
 
 trait RequestResponseTrait
 {
-    /** @var  Request $request */
+    /**
+     * @var  Request $request
+     * @Annotation\Exclude
+     */
     protected $request;
 
-    /** @var  Response $response */
+    /**
+     * @var  Response $response
+     * @Annotation\Exclude
+     */
     protected $response;
 
     /**

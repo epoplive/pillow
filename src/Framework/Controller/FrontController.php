@@ -93,9 +93,44 @@ final class FrontController implements ControllerInterface
             $request = Request::createFromGlobals();
         }
         $this->request = $request;
+        $this->response = new Response();
+        try {
+            $this->route();
+
+            $this->filterRequest($this->request);
+            $reflection = new \ReflectionClass($this->controller);
+            $params = [];
+            foreach($this->getRequest()->query->all() as $key => $param){
+                if(property_exists($param, "name") && array_key_exists($param->name, $vars)){
+                    $params[$key] = $vars[$param->name];
+                }
+            }
+            foreach($reflection->getMethod($this->route->getAction())->getParameters() as $key => $param){
+                if(property_exists($param, "name") && array_key_exists($param->name, $vars)){
+                    $params[$key] = $vars[$param->name];
+                }
+            }
+            $data = $this->controller->{$this->route->getAction()}(...$params);
+            $templateClass = $this->route->getViewClass();
+            $template = new $templateClass($this->route->toArray());
+            if(!$template instanceof TemplateViewInterface){
+                throw new \Exception("Invalid template class.  Class must be an instance of ".TemplateViewInterface::class);
+            }
+            $content = $template->render($data);
+            $this->getResponse()->setContent($content);
+            $this->getResponse()->setStatusCode(200);
+        } catch (\Exception $e){
+            $this->getResponse()->setStatusCode($e->getCode());
+            $this->getResponse()->setContent($e->getMessage());
+        }
+        return $this->getResponse();
+
+    }
+
+    private function route(){
         $routes = $this->routes;
         $this->dispatcher = \FastRoute\simpleDispatcher(function (RouteCollector $r) use ($routes) {
-            foreach ($routes as $route) {
+            $addRoute = function (RouteCollector &$r, Array $route){
                 foreach ($route["methods"] as $key => $value) {
                     if(in_array(strtoupper($key), static::$httpMethods)){
                         $method = strtoupper($key);
@@ -104,9 +139,21 @@ final class FrontController implements ControllerInterface
                     }
                     $r->addRoute($method, $route["uri"], $route);
                 }
+            };
+
+            foreach ($routes as $route) {
+                if(is_array($route["uri"])){
+                    foreach($route["uri"] as $uri){
+                        $multiRoute = $route;
+                        $multiRoute["uri"] = $uri;
+                        $addRoute($r, $multiRoute);
+                    }
+                } else {
+                    $addRoute($r, $route);
+                }
             }
         });
-        $routeInfo = $this->dispatcher->dispatch($this->getRequest()->getMethod(), $this->getRequest()->getRequestUri());
+        $routeInfo = $this->dispatcher->dispatch($this->getRequest()->getMethod(), parse_url($this->getRequest()->getRequestUri(), PHP_URL_PATH));
         switch ($routeInfo[0]) {
             case \FastRoute\Dispatcher::NOT_FOUND:
                 // ... 404 Not Found
@@ -118,9 +165,9 @@ final class FrontController implements ControllerInterface
                 throw new \Exception("Method not allowed.", 405);
                 break;
             case \FastRoute\Dispatcher::FOUND:
-
                 $route = $routeInfo[1];
                 $vars = $routeInfo[2];
+                $this->getRequest()->query->replace(array_merge($this->getRequest()->query->all(), $vars));
                 if (!isset($route["controller"]) && !class_exists($route["controller"])) {
                     throw new \Exception("Invalid controller class!");
                 }
@@ -158,19 +205,6 @@ final class FrontController implements ControllerInterface
             default:
                 throw new \Exception("An unknown error has occurred!");
         }
-
-        $this->filterRequest($this->request);
-
-        $data = $this->controller->{$this->route->getAction()}();
-        $templateClass = $this->route->getViewClass();
-        $template = new $templateClass($this->route->toArray());
-        if(!$template instanceof TemplateViewInterface){
-            throw new \Exception("Invalid template class.  Class must be an instance of ".TemplateViewInterface::class);
-        }
-        $content = $template->render($data);
-        $response = new Response($content, 200);
-        return $response;
-
     }
 
 

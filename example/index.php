@@ -33,7 +33,6 @@ class RatelimitFilter implements \Framework\Request\Filter\FilterInterface {
 }
 
 $fc = \Framework\Controller\FrontController::getInstance();
-$filterManager = new FilterManager($fc);
 $fc->addFilter(new AuthFilter());
 $fc->addFilter(new RatelimitFilter());
 $response = $fc->execute(Request::createFromGlobals());
