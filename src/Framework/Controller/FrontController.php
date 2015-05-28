@@ -140,8 +140,6 @@ final class FrontController implements ControllerInterface
                 throw new \Exception("Controller must return either a response object or you must set a view handler!");
             }
             $this->request->attributes->add(["viewData" => $controllerReturn]);
-            $this->setResponse($this->getViewHandler()->transform($this->request, $this->response));
-
         } catch (\Exception $e){
             $this->getResponse()->setContent($e->getMessage());
 //            $content = $template->renderError()
@@ -151,6 +149,12 @@ final class FrontController implements ControllerInterface
                 $this->getResponse()->setStatusCode(400);
             }
         } finally {
+            try {
+                $this->setResponse($this->getViewHandler()->transform($this->request, $this->response));
+            } catch (\InvalidArgumentException $e){
+                $this->getResponse()->setContent($e->getMessage());
+                $this->getResponse()->setStatusCode(500);
+            }
             return $this->getResponse();
         }
     }
