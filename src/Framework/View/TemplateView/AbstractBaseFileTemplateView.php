@@ -57,10 +57,10 @@ abstract class AbstractBaseFileTemplateView extends AbstractBaseTemplateView
             if(is_array($input)){
                 extract( $input );
             }
-            if(!is_file($templateFile)){
-                throw new \Exception("Template file {$templateFile} not found!");
+            if(!$realPath = stream_resolve_include_path($templateFile)){
+                throw new \Exception("Template file {$templateFile} not found!", 500);
             }
-            require $templateFile;
+            require $realPath;
             $contents = ob_get_contents(); // get contents of buffer
             ob_end_clean();
             return $contents;

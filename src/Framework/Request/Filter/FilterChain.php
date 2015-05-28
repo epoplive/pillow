@@ -73,4 +73,20 @@ class FilterChain
         }
         $this->target = $target;
     }
+
+    /**
+     * @return array
+     */
+    public function getFilters()
+    {
+        return $this->filters;
+    }
+
+    /**
+     * @param array $filters
+     */
+    public function setFilters($filters)
+    {
+        $this->filters = $filters;
+    }
 }
