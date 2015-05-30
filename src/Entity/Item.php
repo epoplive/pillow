@@ -16,6 +16,8 @@ class Item extends Entity
      * @var string
      *
      * @ORM\Column(name="name", type="string", nullable=true)
+     * @Group("something", "somethingelse", "whatever")
+     * @Version(since="0.4.4")
      */
     protected $name;
 

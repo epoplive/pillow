@@ -119,20 +119,25 @@ final class FrontController implements ControllerInterface
         $this->response = new Response();
         try {
             $this->route();
-            $this->request->attributes->add(["route" => $this->route]);
             $this->filterRequest($this->request);
             $reflection = new \ReflectionClass($this->controller);
             $params = [];
-            foreach($this->getRequest()->query->all() as $key => $param){
-                if(property_exists($param, "name") && array_key_exists($param->name, $vars)){
-                    $params[$key] = $vars[$param->name];
-                }
-            }
+            $vars = $this->getRequest()->query->all();
+            $this->request->attributes->add(["route", $this->route]);
+//            echo 'wtf';var_dump($this->request->attributes);die;
+
+//            foreach($this->getRequest()->query->all() as $key => $param){
+//                if(property_exists($param, "name") && array_key_exists($param->name, $vars)){
+//                    $params[$key] = $vars[$param->name];
+//                }
+//            }
+//            var_dump($params);die;
             foreach($reflection->getMethod($this->route->getAction())->getParameters() as $key => $param){
                 if(property_exists($param, "name") && array_key_exists($param->name, $vars)){
                     $params[$key] = $vars[$param->name];
                 }
             }
+//            var_dump($params);die;
             $controllerReturn = $this->controller->{$this->route->getAction()}(...$params);
             if($controllerReturn instanceof Response){
                 return $controllerReturn;
@@ -140,6 +145,7 @@ final class FrontController implements ControllerInterface
                 throw new \Exception("Controller must return either a response object or you must set a view handler!");
             }
             $this->request->attributes->add(["viewData" => $controllerReturn]);
+            $this->response->setStatusCode(200);
         } catch (\Exception $e){
             $this->getResponse()->setContent($e->getMessage());
 //            $content = $template->renderError()
@@ -185,6 +191,7 @@ final class FrontController implements ControllerInterface
                 }
             }
         });
+
         $routeInfo = $this->dispatcher->dispatch($this->getRequest()->getMethod(), parse_url($this->getRequest()->getRequestUri(), PHP_URL_PATH));
         switch ($routeInfo[0]) {
             case \FastRoute\Dispatcher::NOT_FOUND:
@@ -199,7 +206,6 @@ final class FrontController implements ControllerInterface
             case \FastRoute\Dispatcher::FOUND:
                 $route = $routeInfo[1];
                 $vars = $routeInfo[2];
-                $this->getRequest()->query->replace(array_merge($this->getRequest()->query->all(), $vars));
                 if (!isset($route["controller"]) && !class_exists($route["controller"])) {
                     throw new \Exception("Invalid controller class!");
                 }
@@ -240,7 +246,8 @@ final class FrontController implements ControllerInterface
                 if(!isset($route["viewClass"])){
                     $route["viewClass"] = SimpleFileBasedTemplateView::class;
                 }
-                $this->route = new Route($route["uri"], $this->request->getMethod(), $route["controller"], $route["action"], $route["viewClass"], $route["templateFile"]);
+                $this->route = new Route($route["uri"], $this->request->getMethod(), $route["controller"], $route["action"], $route["viewClass"], $route["templateFile"], $vars);
+                $this->request->attributes->add(["route" => $this->route]);
                 break;
             default:
                 throw new \Exception("An unknown error has occurred!", 400);
