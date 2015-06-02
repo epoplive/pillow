@@ -8,6 +8,7 @@ namespace Framework\Request\Filter;
 
 
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 trait FilterManagerTrait
 {
@@ -17,14 +18,21 @@ trait FilterManagerTrait
     /**
      * @param FilterInterface $filter
      */
-    public function addFilter(FilterInterface $filter){
-        $this->filterChain->addFilter($filter);
+    public function addFilter(FilterInterface $filter, $position = null){
+        if($position !== null){
+            $filters = $this->filterChain->getFilters();
+            array_splice($filters, (int)$position, 0, [$filter]);
+            $this->filterChain->setFilters($filters);
+        } else {
+            $this->filterChain->addFilter($filter);
+        }
+
     }
 
     public function insertFilterAfter(FilterInterface $search, FilterInterface $filter){
         foreach($this->filterChain->getFilters() as $key => $compareFilter){
             if($compareFilter === $search){
-                $this->filterChain->setFilters(array_splice($this->filterChain, $key + 1, 0, $filter));
+                $this->filterChain->setFilters(array_splice($this->filterChain->getFilters(), $key + 1, 0, [$filter]));
                 return $key + 1;
             }
         }
@@ -34,7 +42,7 @@ trait FilterManagerTrait
     public function insertFilterBefore(FilterInterface $search, FilterInterface $filter){
         foreach($this->filterChain->getFilters() as $key => $compareFilter){
             if($compareFilter === $search){
-                $this->filterChain->setFilters(array_splice($this->filterChain, $key, 0, $filter));
+                $this->filterChain->setFilters(array_splice($this->filterChain->getFilters(), $key, 0, [$filter]));
                 return $key;
             }
         }
@@ -45,7 +53,14 @@ trait FilterManagerTrait
      * @param Request $request
      */
     public function filterRequest(Request $request){
-        $this->filterChain->execute($request);
+        $this->filterChain->filterRequest($request);
+    }
+
+    /**
+     * @param Response $response
+     */
+    public function filterResponse(Response $response){
+        $this->filterChain->filterResponse($response);
     }
 
     /**

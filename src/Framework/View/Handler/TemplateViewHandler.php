@@ -22,7 +22,7 @@ class TemplateViewHandler implements ViewHandlerInterface
      */
     public function transform(Request $request, Response $response){
         $route = $request->attributes->get("route");
-        $templateClass = is_callable([$route, "getViewClass"]) && $route->getViewClass() ?: SimpleTextTemplateView::class;
+        $templateClass = is_callable([$route, "getViewClass"]) && !empty($route->getViewClass()) ? $route->getViewClass() : SimpleTextTemplateView::class;
         $template = new $templateClass($route ? $request->attributes->get("route")->toArray() : []);
         if(!$template instanceof TemplateViewInterface){
             throw new \Exception("Invalid template class.  Class must be an instance of ".TemplateViewInterface::class, 400);

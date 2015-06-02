@@ -2,6 +2,7 @@
 namespace Framework\Request\Filter;
 
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Class FilterChain
@@ -41,14 +42,28 @@ class FilterChain
     /**
      * @param Request $request
      */
-    public function execute(Request $request){
+    public function filterRequest(Request $request){
         foreach($this->filters as $filter){
             /** @var FilterInterface $filter */
-            $filter->execute($request);
+            $filter->filterRequest($request);
         }
 
         if($this->target){
-            $this->target->execute($request);
+            $this->target->filterRequest($request);
+        }
+    }
+
+    /**
+     * @param Response $response
+     */
+    public function filterResponse(Response $response){
+        foreach($this->filters as $filter){
+            /** @var FilterInterface $filter */
+            $filter->filterResponse($response);
+        }
+
+        if($this->target){
+            $this->target->filterResponse($response);
         }
     }
 

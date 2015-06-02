@@ -5,6 +5,7 @@
  */
 use Framework\Request\Filter\FilterManager;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 include_once __DIR__."/../vendor/autoload.php";
 
@@ -12,22 +13,42 @@ include_once __DIR__."/../vendor/autoload.php";
 class AuthFilter implements \Framework\Request\Filter\FilterInterface
 {
     /**
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param Request $request
+     * @return bool
      */
-    public function execute(Request $request)
+    public function filterRequest(Request $request)
     {
         var_dump("authing bros");
+    }
+
+    /**
+     * @param Response $response
+     * @return bool
+     */
+    public function filterResponse(Response $response)
+    {
+        // TODO: Implement filterResponse() method.
     }
 
 }
 
 class RatelimitFilter implements \Framework\Request\Filter\FilterInterface {
     /**
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param Request $request
+     * @return bool
      */
-    public function execute(Request $request)
+    public function filterRequest(Request $request)
     {
         var_dump("ratelimiting bro");
+    }
+
+    /**
+     * @param Response $response
+     * @return bool
+     */
+    public function filterResponse(Response $response)
+    {
+        // TODO: Implement filterResponse() method.
     }
 
 }

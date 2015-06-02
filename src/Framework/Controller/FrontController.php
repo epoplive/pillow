@@ -16,6 +16,7 @@ use Framework\Route\Route;
 use Framework\View\Handler\ViewHandlerInterface;
 use Framework\View\TemplateView\SimpleFileBasedTemplateView;
 use Framework\View\TemplateView\SimpleJSONTemplateView;
+use Framework\View\TemplateView\SimpleTextTemplateView;
 use Framework\View\TemplateView\TemplateViewInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -107,6 +108,11 @@ final class FrontController implements ControllerInterface
         $this->currentUser = $currentUser;
     }
 
+    public function redirect($path)
+    {
+        header("Location: ".$path);
+    }
+
     /**
      * @param Request $request
      * @return Response
@@ -122,33 +128,24 @@ final class FrontController implements ControllerInterface
             $this->filterRequest($this->request);
             $reflection = new \ReflectionClass($this->controller);
             $params = [];
-            $vars = $this->getRequest()->query->all();
             $this->request->attributes->add(["route", $this->route]);
-//            echo 'wtf';var_dump($this->request->attributes);die;
 
-//            foreach($this->getRequest()->query->all() as $key => $param){
-//                if(property_exists($param, "name") && array_key_exists($param->name, $vars)){
-//                    $params[$key] = $vars[$param->name];
-//                }
-//            }
-//            var_dump($params);die;
             foreach($reflection->getMethod($this->route->getAction())->getParameters() as $key => $param){
-                if(property_exists($param, "name") && array_key_exists($param->name, $vars)){
-                    $params[$key] = $vars[$param->name];
+                if(property_exists($param, "name") && array_key_exists($param->name, (array)$this->route->getVars())){
+                    $params[$key] = $this->route->getVars()[$param->name];
                 }
             }
-//            var_dump($params);die;
             $controllerReturn = $this->controller->{$this->route->getAction()}(...$params);
             if($controllerReturn instanceof Response){
                 return $controllerReturn;
             } else if (!$this->getViewHandler()){
                 throw new \Exception("Controller must return either a response object or you must set a view handler!");
             }
-            $this->request->attributes->add(["viewData" => $controllerReturn]);
+            $this->request->attributes->set("viewData", array_merge($this->request->attributes->get("viewData", []), (array)$controllerReturn));
             $this->response->setStatusCode(200);
         } catch (\Exception $e){
-            $this->getResponse()->setContent($e->getMessage());
-//            $content = $template->renderError()
+            error_log(__METHOD__."\n".$e->getMessage()."\n".$e->getTraceAsString());
+            $this->getResponse()->setContent($e->getMessage()."\n".$e->getTraceAsString());
             try {
                 $this->getResponse()->setStatusCode($e->getCode());
             } catch (\InvalidArgumentException $e){
@@ -157,6 +154,7 @@ final class FrontController implements ControllerInterface
         } finally {
             try {
                 $this->setResponse($this->getViewHandler()->transform($this->request, $this->response));
+                $this->filterResponse($this->response);
             } catch (\InvalidArgumentException $e){
                 $this->getResponse()->setContent($e->getMessage());
                 $this->getResponse()->setStatusCode(500);
@@ -230,6 +228,16 @@ final class FrontController implements ControllerInterface
                         } else {
                             $route["action"] = $route["methods"][strtoupper($this->request->getMethod())]["action"];
                         }
+                        if(isset($route["methods"][strtoupper($this->request->getMethod())]["requestFilters"])){
+                            $reqFilter = $route["methods"][strtoupper($this->request->getMethod())]["requestFilters"];
+                            if(is_array($reqFilter) || is_object($reqFilter)){
+                                foreach((array)$reqFilter as $filterName){
+                                    $this->addFilter(new $filterName(), 0);
+                                }
+                            } else {
+                                $this->addFilter(new $reqFilter(), 0);
+                            }
+                        }
                     } else {
                         $route["action"] = $route["methods"][strtoupper($this->request->getMethod())];
                     }
@@ -248,8 +256,10 @@ final class FrontController implements ControllerInterface
                 }
                 $this->route = new Route($route["uri"], $this->request->getMethod(), $route["controller"], $route["action"], $route["viewClass"], $route["templateFile"], $vars);
                 $this->request->attributes->add(["route" => $this->route]);
+
                 break;
             default:
+                error_log(__METHOD__.":An unknown error has occurred!");
                 throw new \Exception("An unknown error has occurred!", 400);
         }
     }
