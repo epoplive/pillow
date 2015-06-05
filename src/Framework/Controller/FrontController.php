@@ -244,6 +244,8 @@ final class FrontController implements ControllerInterface
                                     foreach($out as $filterName){
                                         if($filterName instanceof FilterInterface){
                                             $this->addFilter($filterName, 0);
+                                        } else if(is_a($filterName, FilterInterface::class, true)){
+                                            $this->addFilter(new $filterName(), 0);
                                         }
                                     }
                                 }
