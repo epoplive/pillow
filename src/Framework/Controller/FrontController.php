@@ -111,6 +111,8 @@ final class FrontController implements ControllerInterface
     public function redirect($path)
     {
         header("Location: ".$path);
+        exit();
+        return true;
     }
 
     /**
@@ -137,23 +139,27 @@ final class FrontController implements ControllerInterface
             }
             $controllerReturn = $this->controller->{$this->route->getAction()}(...$params);
             if($controllerReturn instanceof Response){
-                return $controllerReturn;
+                $this->setResponse($controllerReturn);
             } else if (!$this->getViewHandler()){
                 throw new \Exception("Controller must return either a response object or you must set a view handler!");
+            } else {
+                $this->request->attributes->set("viewData", array_merge($this->request->attributes->get("viewData", []), (array)$controllerReturn));
+                $this->setResponse($this->getViewHandler()->transform($this->request, $this->response));
             }
-            $this->request->attributes->set("viewData", array_merge($this->request->attributes->get("viewData", []), (array)$controllerReturn));
             $this->response->setStatusCode(200);
         } catch (\Exception $e){
-            error_log(__METHOD__."\n".$e->getMessage()."\n".$e->getTraceAsString());
-            $this->getResponse()->setContent($e->getMessage()."\n".$e->getTraceAsString());
             try {
-                $this->getResponse()->setStatusCode($e->getCode());
-            } catch (\InvalidArgumentException $e){
-                $this->getResponse()->setStatusCode(400);
-            }
+                if ($this->getViewHandler() && method_exists($this->getViewHandler(), "handleException")){
+                    $this->getViewHandler()->handleException($e);
+                } else {
+                    $this->getResponse()->setContent($e->getMessage()."\n".$e->getTraceAsString());
+                    $this->getResponse()->setStatusCode($e->getCode());
+                }
+                } catch (\InvalidArgumentException $e){
+                    $this->getResponse()->setStatusCode(400);
+                }
         } finally {
             try {
-                $this->setResponse($this->getViewHandler()->transform($this->request, $this->response));
                 $this->filterResponse($this->response);
             } catch (\InvalidArgumentException $e){
                 $this->getResponse()->setContent($e->getMessage());
@@ -228,11 +234,19 @@ final class FrontController implements ControllerInterface
                         } else {
                             $route["action"] = $route["methods"][strtoupper($this->request->getMethod())]["action"];
                         }
+
                         if(isset($route["methods"][strtoupper($this->request->getMethod())]["requestFilters"])){
                             $reqFilter = $route["methods"][strtoupper($this->request->getMethod())]["requestFilters"];
-                            if(is_array($reqFilter) || is_object($reqFilter)){
-                                foreach((array)$reqFilter as $filterName){
-                                    $this->addFilter(new $filterName(), 0);
+                            if(is_callable($reqFilter)){
+                                $out = $reqFilter($this);
+                                if(is_array($out)){
+                                    foreach($out as $filterName){
+                                        $this->addFilter($filterName, 0);
+                                    }
+                                }
+                            } else if(is_array($reqFilter) || is_object($reqFilter)){
+                                foreach($reqFilter as $filter){
+                                    $this->addFilter(new $filter(), 0);
                                 }
                             } else {
                                 $this->addFilter(new $reqFilter(), 0);

@@ -32,7 +32,13 @@ trait FilterManagerTrait
     public function insertFilterAfter(FilterInterface $search, FilterInterface $filter){
         foreach($this->filterChain->getFilters() as $key => $compareFilter){
             if($compareFilter === $search){
-                $this->filterChain->setFilters(array_splice($this->filterChain->getFilters(), $key + 1, 0, [$filter]));
+                $filters = $this->filterChain->getFilters();
+                if(($key + 1) >= count($filters)){
+                    $filters = array_splice($filters, $key + 1, 0, [$filter]);
+                } else {
+                    $filters[] = $filter;
+                }
+                $this->filterChain->setFilters($filters);
                 return $key + 1;
             }
         }

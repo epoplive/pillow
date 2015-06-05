@@ -14,6 +14,22 @@ use Symfony\Component\HttpFoundation\Response;
 
 class TemplateViewHandler implements ViewHandlerInterface
 {
+    protected $templateClass = SimpleTextTemplateView::class;
+    protected $template;
+
+    /**
+     * TemplateViewHandler constructor.
+     *
+     * @param $templateClass
+     */
+    public function __construct($templateClass = null)
+    {
+        if($templateClass){
+            $this->templateClass = $templateClass;
+        }
+    }
+
+
     /**
      * @param Request $request
      * @param Response $response
@@ -22,13 +38,43 @@ class TemplateViewHandler implements ViewHandlerInterface
      */
     public function transform(Request $request, Response $response){
         $route = $request->attributes->get("route");
-        $templateClass = is_callable([$route, "getViewClass"]) && !empty($route->getViewClass()) ? $route->getViewClass() : SimpleTextTemplateView::class;
-        $template = new $templateClass($route ? $request->attributes->get("route")->toArray() : []);
-        if(!$template instanceof TemplateViewInterface){
+        if(is_callable([$route, "getViewClass"]) && !empty($route->getViewClass())){
+            $this->setTemplateClass($route->getViewClass());
+        }
+//        $this->templateClass = is_callable([$route, "getViewClass"]) && !empty($route->getViewClass()) ? $route->getViewClass() : SimpleTextTemplateView::class;
+        $this->template = new $this->templateClass($route ? $route->toArray() : []);
+        if(!$this->template instanceof TemplateViewInterface){
             throw new \Exception("Invalid template class.  Class must be an instance of ".TemplateViewInterface::class, 400);
         }
-        $content = $template->render($request->attributes->get("viewData"));
+        $content = $this->template->render($request->attributes->get("viewData"));
         $response->setContent($content);
         return $response;
+    }
+
+    public function handleException(\Exception $e){
+        if(!$this->template){
+            $this->template = new $this->templateClass();
+        }
+        if(is_callable([$this->template, "handleException"])){
+            $this->template->handleException($e);
+        } else {
+            throw $e;
+        }
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getTemplateClass()
+    {
+        return $this->templateClass;
+    }
+
+    /**
+     * @param mixed $templateClass
+     */
+    public function setTemplateClass($templateClass)
+    {
+        $this->templateClass = $templateClass;
     }
 }
