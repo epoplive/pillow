@@ -11,6 +11,7 @@ namespace Framework\Controller;
 
 use FastRoute\RouteCollector;
 use Framework\Request\Filter\FilterChain;
+use Framework\Request\Filter\FilterInterface;
 use Framework\Request\Filter\FilterManagerTrait;
 use Framework\Route\Route;
 use Framework\View\Handler\ViewHandlerInterface;
@@ -241,7 +242,9 @@ final class FrontController implements ControllerInterface
                                 $out = $reqFilter($this);
                                 if(is_array($out)){
                                     foreach($out as $filterName){
-                                        $this->addFilter($filterName, 0);
+                                        if($filterName instanceof FilterInterface){
+                                            $this->addFilter($filterName, 0);
+                                        }
                                     }
                                 }
                             } else if(is_array($reqFilter) || is_object($reqFilter)){
