@@ -1,5 +1,7 @@
 <?php
-include_once __DIR__."/../../../../../vendor/autoload.php";
+if($composerAutoloader = stream_resolve_include_path("/vendor/autoload.php")){
+    include_once $composerAutoloader;
+}
 use Controller\TestController;
 use Framework\View\TemplateView\DoctrineAnnotationTemplateView;
 

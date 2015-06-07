@@ -90,4 +90,22 @@ class FrontControllerTest extends \PHPUnit_Framework_TestCase
         $fc->setController($controller);
         $this->assertSame($controller, $fc->getController());
     }
+
+    public function testGetSetRequest(){
+        FrontController::$routesFile = __DIR__."/Fixtures/routes.php";
+        $routes = include(__DIR__."/Fixtures/routes.php");
+        $fc = FrontController::getInstance();
+        $request = $this->getMock(Request::class);
+        $fc->setRequest($request);
+        $this->assertSame($request, $fc->getRequest());
+    }
+
+    public function testGetSetResponse(){
+        FrontController::$routesFile = __DIR__."/Fixtures/routes.php";
+        $routes = include(__DIR__."/Fixtures/routes.php");
+        $fc = FrontController::getInstance();
+        $response = $this->getMock(Response::class);
+        $fc->setResponse($response);
+        $this->assertSame($response, $fc->getResponse());
+    }
 }
