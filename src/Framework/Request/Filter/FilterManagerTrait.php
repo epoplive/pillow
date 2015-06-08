@@ -33,10 +33,11 @@ trait FilterManagerTrait
         foreach($this->filterChain->getFilters() as $key => $compareFilter){
             if($compareFilter === $search){
                 $filters = $this->filterChain->getFilters();
+
                 if(($key + 1) >= count($filters)){
-                    $filters = array_splice($filters, $key + 1, 0, [$filter]);
-                } else {
                     $filters[] = $filter;
+                } else {
+                    array_splice($filters, $key + 1, 0, [$filter]);
                 }
                 $this->filterChain->setFilters($filters);
                 return $key + 1;
@@ -49,7 +50,8 @@ trait FilterManagerTrait
         foreach($this->filterChain->getFilters() as $key => $compareFilter){
             if($compareFilter === $search){
                 $filters = $this->filterChain->getFilters();
-                $this->filterChain->setFilters(array_splice($filters, $key, 0, [$filter]));
+                array_splice($filters, $key, 0, [$filter]);
+                $this->filterChain->setFilters($filters);
                 return $key;
             }
         }

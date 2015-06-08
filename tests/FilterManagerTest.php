@@ -29,12 +29,15 @@ class FilterManagerTest extends \PHPUnit_Framework_TestCase
         $manager = new FilterManager($fc);
         $this->assertEmpty($manager->getFilterChain()->getFilters());
         $filter = $this->getMock(FilterInterface::class);
+        $filter->name = "filter1";
         $manager->addFilter($filter);
         $filter2 = $this->getMock(FilterInterface::class);
+        $filter2->name = "filter2";
         $manager->addFilter($filter2);
         $this->assertCount(2, $manager->getFilterChain()->getFilters());
 
         $filter3 = $this->getMock(FilterInterface::class);
+        $filter3->name = "filter3";
         $manager->insertFilterBefore($filter2, $filter3);
         $this->assertCount(3, $manager->getFilterChain()->getFilters());
         $this->assertSame($filter3, $manager->getFilterChain()->getFilters()[1]);
@@ -47,15 +50,25 @@ class FilterManagerTest extends \PHPUnit_Framework_TestCase
         $manager = new FilterManager($fc);
         $this->assertEmpty($manager->getFilterChain()->getFilters());
         $filter = $this->getMock(FilterInterface::class);
+        $filter->name = "filter1";
         $manager->addFilter($filter);
         $filter2 = $this->getMock(FilterInterface::class);
+        $filter2->name = "filter2";
         $manager->addFilter($filter2);
         $this->assertCount(2, $manager->getFilterChain()->getFilters());
-
         $filter3 = $this->getMock(FilterInterface::class);
+        $filter3->name = "filter3";
         $manager->insertFilterAfter($filter, $filter3);
+
         $this->assertCount(3, $manager->getFilterChain()->getFilters());
         $this->assertSame($filter3, $manager->getFilterChain()->getFilters()[1]);
+
+        $filter4 = $this->getMock(FilterInterface::class);
+        $filter4->name = "filter4";
+        $manager->insertFilterAfter($filter2, $filter4);
+
+        $this->assertCount(4, $manager->getFilterChain()->getFilters());
+        $this->assertSame($filter4, $manager->getFilterChain()->getFilters()[3]);
         $fc->destroy();
     }
 
@@ -73,7 +86,7 @@ class FilterManagerTest extends \PHPUnit_Framework_TestCase
     {
         $fc = FrontController::getInstance();
         $manager = new FilterManager($fc);
-        $this->assertNull($manager->getFilterChain()->getFilters());
+        $this->assertEmpty($manager->getFilterChain()->getFilters(), print_r($manager->getFilterChain()->getFilters(), true));
         $fc->destroy();
     }
 }
