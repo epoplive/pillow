@@ -138,6 +138,7 @@ final class FrontController implements ControllerInterface
         if (!$request) {
             $request = Request::createFromGlobals();
         }
+        var_dump($request);die;
         $this->request = $request;
         $this->response = new Response();
         try {
@@ -343,5 +344,10 @@ final class FrontController implements ControllerInterface
     public function setRoutes($routes)
     {
         $this->routes = $routes;
+    }
+
+    public function destroy()
+    {
+        static::$instance = null;
     }
 }

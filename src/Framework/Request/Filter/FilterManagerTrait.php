@@ -48,7 +48,8 @@ trait FilterManagerTrait
     public function insertFilterBefore(FilterInterface $search, FilterInterface $filter){
         foreach($this->filterChain->getFilters() as $key => $compareFilter){
             if($compareFilter === $search){
-                $this->filterChain->setFilters(array_splice($this->filterChain->getFilters(), $key, 0, [$filter]));
+                $filters = $this->filterChain->getFilters();
+                $this->filterChain->setFilters(array_splice($filters, $key, 0, [$filter]));
                 return $key;
             }
         }

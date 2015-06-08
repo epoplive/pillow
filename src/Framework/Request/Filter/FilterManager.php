@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\Request;
  *
  * @package Framework\Filter
  */
-class FilterManager
+class FilterManager implements FilterManagerInterface
 {
     use FilterManagerTrait;
 
