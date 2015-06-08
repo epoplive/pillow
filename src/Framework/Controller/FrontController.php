@@ -138,7 +138,6 @@ final class FrontController implements ControllerInterface
         if (!$request) {
             $request = Request::createFromGlobals();
         }
-        var_dump($request);die;
         $this->request = $request;
         $this->response = new Response();
         try {
