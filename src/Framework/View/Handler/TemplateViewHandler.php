@@ -77,4 +77,20 @@ class TemplateViewHandler implements ViewHandlerInterface
     {
         $this->templateClass = $templateClass;
     }
+
+    /**
+     * @return mixed
+     */
+    public function getTemplate()
+    {
+        return $this->template;
+    }
+
+    /**
+     * @param mixed $template
+     */
+    public function setTemplate($template)
+    {
+        $this->template = $template;
+    }
 }

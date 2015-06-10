@@ -288,7 +288,6 @@ final class FrontController implements ControllerInterface
                 }
                 if(!isset($route["viewClass"])){
                     $route["viewClass"] = null;
-//                    $route["viewClass"] = $this->getViewHandler() && $this->getViewHandler()->getTemplate() ? SimpleFileBasedTemplateView::class;
                 }
                 $this->route = new Route($route["uri"], $this->request->getMethod(), $route["controller"], $route["action"], $route["viewClass"], $route["templateFile"], $vars);
                 $this->request->attributes->add(["route" => $this->route]);
