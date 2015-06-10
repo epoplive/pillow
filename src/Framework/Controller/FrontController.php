@@ -73,7 +73,7 @@ final class FrontController implements ControllerInterface
             }
             $routes = include static::$routesFile;
             if(empty($routes)){
-                throw new \Exception("No routes found!");
+                throw new \Exception("No routes found!", 500);
             }
             static::$instance = new FrontController($routes);
         }
@@ -125,8 +125,10 @@ final class FrontController implements ControllerInterface
 
     public function redirect($path)
     {
-        header("Location: ".$path);
-        exit();
+        if (php_sapi_name() !== "cli") {
+            header("Location: ".$path);
+            exit();
+        }
         return true;
     }
 

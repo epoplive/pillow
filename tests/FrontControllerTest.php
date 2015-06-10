@@ -20,6 +20,7 @@ class FrontControllerTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @expectedException \Exception
+     * @expectedExceptionCode 500
      */
     public function testNoRouteFile(){
         $fc = FrontController::getInstance();
