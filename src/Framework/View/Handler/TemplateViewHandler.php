@@ -41,7 +41,7 @@ class TemplateViewHandler implements ViewHandlerInterface
         if(is_callable([$route, "getViewClass"]) && !empty($route->getViewClass())){
             $this->setTemplateClass($route->getViewClass());
         }
-//        $this->templateClass = is_callable([$route, "getViewClass"]) && !empty($route->getViewClass()) ? $route->getViewClass() : SimpleTextTemplateView::class;
+
         $this->template = new $this->templateClass($route ? $route->toArray() : []);
         if(!$this->template instanceof TemplateViewInterface){
             throw new \Exception("Invalid template class.  Class must be an instance of ".TemplateViewInterface::class, 400);
