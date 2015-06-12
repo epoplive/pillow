@@ -63,16 +63,18 @@ final class FrontController implements ControllerInterface
         $this->filterChain = new FilterChain();
     }
 
-    private function __clone(){}
+    private function __clone()
+    {
+    }
 
     public static function getInstance()
     {
         if (!static::$instance) {
-            if(stream_resolve_include_path(static::$routesFile) === false){
+            if (stream_resolve_include_path(static::$routesFile) === false) {
                 throw new \Exception("Unable to load routes file from include path.");
             }
             $routes = include static::$routesFile;
-            if(empty($routes)){
+            if (empty($routes)) {
                 throw new \Exception("No routes found!", 500);
             }
             static::$instance = new FrontController($routes);
@@ -80,13 +82,18 @@ final class FrontController implements ControllerInterface
         return static::$instance;
     }
 
-    public static function getRootPath(){
-        if(defined("PILLOW_ROOT_PATH")){
+    public static function getRootPath()
+    {
+        if (defined("PILLOW_ROOT_PATH")) {
             self::$rootPath = PILLOW_ROOT_PATH;
-        } else if(!isset(self::$rootPath)){
-            $path = explode(DIRECTORY_SEPARATOR, __DIR__);
-            while(array_pop($path) !== 'src');
-            self::$rootPath = implode(DIRECTORY_SEPARATOR, $path);
+        } else {
+            if (!isset(self::$rootPath)) {
+                $path = explode(DIRECTORY_SEPARATOR, __DIR__);
+                while (array_pop($path) !== 'src') {
+                    ;
+                }
+                self::$rootPath = implode(DIRECTORY_SEPARATOR, $path);
+            }
         }
         return self::$rootPath;
     }
@@ -126,7 +133,7 @@ final class FrontController implements ControllerInterface
     public function redirect($path)
     {
         if (php_sapi_name() !== "cli") {
-            header("Location: ".$path);
+            header("Location: " . $path);
             exit();
         }
         return true;
@@ -136,7 +143,8 @@ final class FrontController implements ControllerInterface
      * @param Request $request
      * @return Response
      */
-    public function execute(Request $request){
+    public function execute(Request $request)
+    {
         if (!$request) {
             $request = Request::createFromGlobals();
         }
@@ -149,36 +157,39 @@ final class FrontController implements ControllerInterface
             $params = [];
             $this->request->attributes->add(["route", $this->route]);
 
-            foreach($reflection->getMethod($this->route->getAction())->getParameters() as $key => $param){
-                if(property_exists($param, "name") && array_key_exists($param->name, (array)$this->route->getVars())){
+            foreach ($reflection->getMethod($this->route->getAction())->getParameters() as $key => $param) {
+                if (property_exists($param, "name") && array_key_exists($param->name, (array)$this->route->getVars())) {
                     $params[$key] = $this->route->getVars()[$param->name];
                 }
             }
             $controllerReturn = $this->controller->{$this->route->getAction()}(...$params);
-            if($controllerReturn instanceof Response){
+            if ($controllerReturn instanceof Response) {
                 $this->setResponse($controllerReturn);
-            } else if (!$this->getViewHandler()){
-                throw new \Exception("Controller must return either a response object or you must set a view handler!");
             } else {
-                $this->request->attributes->set("viewData", array_merge($this->request->attributes->get("viewData", []), (array)$controllerReturn));
-                $this->setResponse($this->getViewHandler()->transform($this->request, $this->response));
+                if (!$this->getViewHandler()) {
+                    throw new \Exception("Controller must return either a response object or you must set a view handler!");
+                } else {
+                    $this->request->attributes->set("viewData",
+                        array_merge($this->request->attributes->get("viewData", []), (array)$controllerReturn));
+                    $this->setResponse($this->getViewHandler()->transform($this->request, $this->response));
+                }
             }
             $this->response->setStatusCode(200);
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             try {
-                if ($this->getViewHandler() && method_exists($this->getViewHandler(), "handleException")){
+                if ($this->getViewHandler() && method_exists($this->getViewHandler(), "handleException")) {
                     $this->getViewHandler()->handleException($e);
                 } else {
-                    $this->getResponse()->setContent($e->getMessage()."\n".$e->getTraceAsString());
+                    $this->getResponse()->setContent($e->getMessage() . "\n" . $e->getTraceAsString());
                     $this->getResponse()->setStatusCode($e->getCode());
                 }
-                } catch (\InvalidArgumentException $e){
-                    $this->getResponse()->setStatusCode(400);
-                }
+            } catch (\InvalidArgumentException $e) {
+                $this->getResponse()->setStatusCode(400);
+            }
         } finally {
             try {
                 $this->filterResponse($this->response);
-            } catch (\InvalidArgumentException $e){
+            } catch (\InvalidArgumentException $e) {
                 $this->getResponse()->setContent($e->getMessage());
                 $this->getResponse()->setStatusCode(500);
             }
@@ -186,23 +197,26 @@ final class FrontController implements ControllerInterface
         }
     }
 
-    private function route(){
+    private function route()
+    {
         $routes = $this->routes;
         $this->dispatcher = \FastRoute\simpleDispatcher(function (RouteCollector $r) use ($routes) {
-            $addRoute = function (RouteCollector &$r, Array $route){
+            $addRoute = function (RouteCollector &$r, Array $route) {
                 foreach ($route["methods"] as $key => $value) {
-                    if(in_array(strtoupper($key), static::$httpMethods)){
+                    if (in_array(strtoupper($key), static::$httpMethods)) {
                         $method = strtoupper($key);
-                    } else if(is_numeric($key)){
-                        $method = strtoupper($value);
+                    } else {
+                        if (is_numeric($key)) {
+                            $method = strtoupper($value);
+                        }
                     }
                     $r->addRoute($method, $route["uri"], $route);
                 }
             };
 
             foreach ($routes as $route) {
-                if(is_array($route["uri"])){
-                    foreach($route["uri"] as $uri){
+                if (is_array($route["uri"])) {
+                    foreach ($route["uri"] as $uri) {
                         $multiRoute = $route;
                         $multiRoute["uri"] = $uri;
                         $addRoute($r, $multiRoute);
@@ -213,7 +227,8 @@ final class FrontController implements ControllerInterface
             }
         });
 
-        $routeInfo = $this->dispatcher->dispatch($this->getRequest()->getMethod(), parse_url($this->getRequest()->getRequestUri(), PHP_URL_PATH));
+        $routeInfo = $this->dispatcher->dispatch($this->getRequest()->getMethod(),
+            parse_url($this->getRequest()->getRequestUri(), PHP_URL_PATH));
         switch ($routeInfo[0]) {
             case \FastRoute\Dispatcher::NOT_FOUND:
                 // ... 404 Not Found
@@ -232,69 +247,79 @@ final class FrontController implements ControllerInterface
                 }
 
                 $this->controller = new $route["controller"]($this->request);
-                if(array_key_exists("methods", $route)){ // clean up the method names in the route array so we don't have to worry about case
+                if (array_key_exists("methods",
+                    $route)) { // clean up the method names in the route array so we don't have to worry about case
                     $newMethods = [];
-                    foreach($route["methods"] as $key => $value){
-                        if(in_array(strtoupper($key), self::$httpMethods)){
+                    foreach ($route["methods"] as $key => $value) {
+                        if (in_array(strtoupper($key), self::$httpMethods)) {
                             $newMethods[strtoupper($key)] = $value;
-                        } else if(in_array(strtoupper($value), self::$httpMethods)){
-                            $newMethods[] = $value;
+                        } else {
+                            if (in_array(strtoupper($value), self::$httpMethods)) {
+                                $newMethods[] = $value;
+                            }
                         }
                     }
                     $route["methods"] = $newMethods;
                 }
                 if (array_key_exists(strtoupper($this->request->getMethod()), $route["methods"])) {
-                    if(is_array($route["methods"][strtoupper($this->request->getMethod())])){
-                        if(!isset($route["methods"][strtoupper($this->request->getMethod())]["action"])){
+                    if (is_array($route["methods"][strtoupper($this->request->getMethod())])) {
+                        if (!isset($route["methods"][strtoupper($this->request->getMethod())]["action"])) {
 //                            throw new \Exception("Action not specified!");
-                            $route["action"] = $this->request->getMethod()."Action";
+                            $route["action"] = $this->request->getMethod() . "Action";
                         } else {
                             $route["action"] = $route["methods"][strtoupper($this->request->getMethod())]["action"];
                         }
 
-                        if(isset($route["methods"][strtoupper($this->request->getMethod())]["requestFilters"])){
+                        if (isset($route["methods"][strtoupper($this->request->getMethod())]["requestFilters"])) {
                             $reqFilter = $route["methods"][strtoupper($this->request->getMethod())]["requestFilters"];
-                            if(is_callable($reqFilter)){
+                            if (is_callable($reqFilter)) {
                                 $out = $reqFilter($this);
-                                if(is_array($out)){
-                                    foreach($out as $filterName){
-                                        if($filterName instanceof FilterInterface){
+                                if (is_array($out)) {
+                                    foreach ($out as $filterName) {
+                                        if ($filterName instanceof FilterInterface) {
                                             $this->addFilter($filterName, 0);
-                                        } else if(is_a($filterName, FilterInterface::class, true)){
-                                            $this->addFilter(new $filterName(), 0);
+                                        } else {
+                                            if (is_a($filterName, FilterInterface::class, true)) {
+                                                $this->addFilter(new $filterName(), 0);
+                                            }
                                         }
                                     }
                                 }
-                            } else if(is_array($reqFilter) || is_object($reqFilter)){
-                                foreach($reqFilter as $filter){
-                                    $this->addFilter(new $filter(), 0);
-                                }
                             } else {
-                                $this->addFilter(new $reqFilter(), 0);
+                                if (is_array($reqFilter) || is_object($reqFilter)) {
+                                    foreach ($reqFilter as $filter) {
+                                        $this->addFilter(new $filter(), 0);
+                                    }
+                                } else {
+                                    $this->addFilter(new $reqFilter(), 0);
+                                }
                             }
                         }
                     } else {
                         $route["action"] = $route["methods"][strtoupper($this->request->getMethod())];
                     }
-                } else if(in_array(strtoupper($this->request->getMethod()), $route["methods"])){
-                    $route["action"] = strtolower($this->request->getMethod())."Action";
+                } else {
+                    if (in_array(strtoupper($this->request->getMethod()), $route["methods"])) {
+                        $route["action"] = strtolower($this->request->getMethod()) . "Action";
+                    }
                 }
 
                 if (!method_exists($this->controller, $route["action"])) {
                     throw new \Exception("Invalid controller method: {$route["action"]}");
                 }
-                if(!isset($route["templateFile"])){
+                if (!isset($route["templateFile"])) {
                     $route["templateFile"] = null;
                 }
-                if(!isset($route["viewClass"])){
+                if (!isset($route["viewClass"])) {
                     $route["viewClass"] = null;
                 }
-                $this->route = new Route($route["uri"], $this->request->getMethod(), $route["controller"], $route["action"], $route["viewClass"], $route["templateFile"], $vars);
+                $this->route = new Route($route["uri"], $this->request->getMethod(), $route["controller"],
+                    $route["action"], $route["viewClass"], $route["templateFile"], $vars);
                 $this->request->attributes->add(["route" => $this->route]);
 
                 break;
             default:
-                error_log(__METHOD__.":An unknown error has occurred!");
+                error_log(__METHOD__ . ":An unknown error has occurred!");
                 throw new \Exception("An unknown error has occurred!", 400);
         }
     }
