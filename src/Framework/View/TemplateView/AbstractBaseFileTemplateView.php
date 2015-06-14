@@ -22,7 +22,7 @@ abstract class AbstractBaseFileTemplateView extends AbstractBaseTemplateView
     public function getTemplate()
     {
         if($this->getTemplateFile()){
-            if(!$this->templateHash !== md5($this->template)){
+            if(!$this->templateHash || $this->templateHash !== md5($this->template)){
                 $this->loadTemplateFromFile();
             }
         }

@@ -20,4 +20,8 @@ class SimpleFileBasedTemplateView extends AbstractBaseFileTemplateView
         return $this->renderScoped($this->getTemplatePath(), (array)$input);
     }
 
+    public function handleException(\Exception $e){
+        return $this->renderScoped($this->getTemplatePath(), ["errors" => [$e]]);
+    }
+
 }

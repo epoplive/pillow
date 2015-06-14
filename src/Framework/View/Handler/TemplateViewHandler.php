@@ -42,7 +42,10 @@ class TemplateViewHandler implements ViewHandlerInterface
             $this->setTemplateClass($route->getViewClass());
         }
 
-        $this->template = new $this->templateClass($route ? $route->toArray() : []);
+        if(!$this->getTemplate() instanceof TemplateViewInterface || $this->getTemplateClass() !== get_class($this->getTemplate())){
+            $this->template = new $this->templateClass();//$route ? $route->toArray() : []);
+        }
+
         if(!$this->template instanceof TemplateViewInterface){
             throw new \Exception("Invalid template class.  Class must be an instance of ".TemplateViewInterface::class, 400);
         }
@@ -79,7 +82,7 @@ class TemplateViewHandler implements ViewHandlerInterface
     }
 
     /**
-     * @return mixed
+     * @return TemplateViewInterface
      */
     public function getTemplate()
     {
@@ -87,10 +90,11 @@ class TemplateViewHandler implements ViewHandlerInterface
     }
 
     /**
-     * @param mixed $template
+     * @param TemplateViewInterface $template
      */
-    public function setTemplate($template)
+    public function setTemplate(TemplateViewInterface $template)
     {
         $this->template = $template;
+        $this->setTemplateClass(get_class($template));
     }
 }
