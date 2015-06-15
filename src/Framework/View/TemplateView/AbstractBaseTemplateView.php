@@ -14,7 +14,7 @@ use Framework\Controller\FrontController;
  *
  * @package Framework\View\TemplateView
  */
-abstract class AbstractBaseTemplateView implements TemplateViewinterface
+abstract class AbstractBaseTemplateView implements TemplateViewInterface
 {
     /** @var  Array $input */
     protected $input;

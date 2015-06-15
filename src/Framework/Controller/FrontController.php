@@ -185,7 +185,7 @@ final class FrontController implements ControllerInterface
                         $message = "Exit with code {$e->getCode()}: {$e->getMessage()}".$eolChar;
                         $message .= "File: {$e->getFile()}, Line: {$e->getLine()}".$eolChar;
                         $message .= "{$e->getCode()}".$eolChar;
-                        $message .= "{$e->getTraceAsString()}";
+                        $message .= php_sapi_name() == "cli" ? $e->getTraceAsString() : nl2br($e->getTraceAsString());
                         exit($message);
                     }
                 } else {
