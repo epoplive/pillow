@@ -178,7 +178,16 @@ final class FrontController implements ControllerInterface
         } catch (\Exception $e) {
             try {
                 if ($this->getViewHandler() && method_exists($this->getViewHandler(), "handleException")) {
-                    $this->getViewHandler()->handleException($e);
+                    try{
+                        $this->getViewHandler()->handleException($e);
+                    } catch (\Exception $e){
+                        $eolChar = php_sapi_name() == "cli" ? PHP_EOL : "</br>";
+                        $message = "Exit with code {$e->getCode()}: {$e->getMessage()}".$eolChar;
+                        $message .= "File: {$e->getFile()}, Line: {$e->getLine()}".$eolChar;
+                        $message .= "{$e->getCode()}".$eolChar;
+                        $message .= "{$e->getTraceAsString()}";
+                        exit($message);
+                    }
                 } else {
                     $this->getResponse()->setContent($e->getMessage() . "\n" . $e->getTraceAsString());
                     $this->getResponse()->setStatusCode($e->getCode());
@@ -227,8 +236,10 @@ final class FrontController implements ControllerInterface
             }
         });
 
-        $routeInfo = $this->dispatcher->dispatch($this->getRequest()->getMethod(),
-            parse_url($this->getRequest()->getRequestUri(), PHP_URL_PATH));
+        $routeInfo = $this->dispatcher->dispatch(
+            $this->getRequest()->getMethod(),
+            parse_url($this->getRequest()->getRequestUri(), PHP_URL_PATH)
+        );
         switch ($routeInfo[0]) {
             case \FastRoute\Dispatcher::NOT_FOUND:
                 // ... 404 Not Found
