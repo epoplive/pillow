@@ -22,6 +22,8 @@ abstract class AbstractBaseTemplateView implements TemplateViewInterface
     protected $template;
     /** @var  Array $config */
     protected $config;
+    /** @var  string $alias */
+    protected $alias;
 
     /**
      * AbstractBaseTemplateView constructor.
@@ -70,6 +72,22 @@ abstract class AbstractBaseTemplateView implements TemplateViewInterface
     public function setTemplate($template)
     {
         $this->template = $template;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAlias()
+    {
+        return $this->alias;
+    }
+
+    /**
+     * @param string $alias
+     */
+    public function setAlias($alias)
+    {
+        $this->alias = $alias;
     }
 
     /**

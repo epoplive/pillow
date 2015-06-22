@@ -6,36 +6,27 @@
  * Time: 9:17 PM
  */
 
-namespace Framework\View\TemplateView;
+namespace Framework\View\Template;
 
 
 /**
- * Interface TemplateViewInterface
+ * Interface TemplateInterface
  *
- * @package Framework\View\TemplateView
+ * @package Framework\View\Template
  */
-interface TemplateViewInterface
+interface TemplateInterface
 {
-    /**
-     * return the view input
-     * @return Array
-     */
-    public function getInput();
+    public function __construct($content = null, $alias = null);
 
     /**
-     * @param mixed $input
+     * @param string $content
      */
-    public function setInput($input = null);
-
-    /**
-     * @param string $template
-     */
-    public function setTemplate($template);
+    public function setContent($content);
 
     /**
      * @return string
      */
-    public function getTemplate();
+    public function getContent();
 
     /**
      * Render the view into a string and return for output

@@ -14,11 +14,10 @@ use Framework\Request\Filter\FilterChain;
 use Framework\Request\Filter\FilterInterface;
 use Framework\Request\Filter\FilterManagerTrait;
 use Framework\Route\Route;
+use Framework\View\Handler\InputOutputHandlerInterface;
 use Framework\View\Handler\ViewHandlerInterface;
-use Framework\View\TemplateView\SimpleFileBasedTemplateView;
-use Framework\View\TemplateView\SimpleJSONTemplateView;
-use Framework\View\TemplateView\SimpleTextTemplateView;
-use Framework\View\TemplateView\TemplateViewInterface;
+use Framework\View\View;
+use Framework\View\ViewInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -39,7 +38,18 @@ final class FrontController implements ControllerInterface
     /** @var  string $rootPath */
     private static $rootPath;
 
+    // placeholder for an object to replace the ViewHandler
+    // this should take some type of input request and output some out of output request
+    // the front controller then will defer responsibility to this for handling the actual logic
+    // so for instance we need an httpio class that will take a http request and output a http response
+    // this will also handle all of the logic for trapping error
+    // having the $this->view variable still makes sense in this context because there's always a view of the output
+    private $ioHandler;
+
     private $viewHandler;
+
+    /** @var ViewInterface view */
+    private $view;
 
     public static $routesFile = "config/routes.php";
 
@@ -61,6 +71,7 @@ final class FrontController implements ControllerInterface
     {
         $this->setRoutes($routes);
         $this->filterChain = new FilterChain();
+        $this->view = new View();
     }
 
     private function __clone()
@@ -99,6 +110,22 @@ final class FrontController implements ControllerInterface
     }
 
     /**
+     * @return InputOutputHandlerInterface
+     */
+    public function getIoHandler()
+    {
+        return $this->ioHandler;
+    }
+
+    /**
+     * @param InputOutputHandlerInterface $ioHandler
+     */
+    public function setIoHandler(InputOutputHandlerInterface $ioHandler)
+    {
+        $this->ioHandler = $ioHandler;
+    }
+
+    /**
      * @return ViewHandlerInterface
      */
     public function getViewHandler()
@@ -112,6 +139,14 @@ final class FrontController implements ControllerInterface
     public function setViewHandler(ViewHandlerInterface $viewHandler = null)
     {
         $this->viewHandler = $viewHandler;
+    }
+
+    /**
+     * @return ViewInterface
+     */
+    public function getView()
+    {
+        return $this->view;
     }
 
     /**
@@ -145,12 +180,13 @@ final class FrontController implements ControllerInterface
      */
     public function execute(Request $request)
     {
-        if (!$request) {
-            $request = Request::createFromGlobals();
-        }
-        $this->request = $request;
+        $this->request = $request ?: Request::createFromGlobals();
         $this->response = new Response();
         try {
+            if (!$this->getIoHandler()) {
+                throw new \Exception("Controller must return either a response object or you must set a view handler!");
+            }
+
             $this->route();
             $this->filterRequest($this->request);
             $reflection = new \ReflectionClass($this->controller);
@@ -166,33 +202,28 @@ final class FrontController implements ControllerInterface
             if ($controllerReturn instanceof Response) {
                 $this->setResponse($controllerReturn);
             } else {
-                if (!$this->getViewHandler()) {
-                    throw new \Exception("Controller must return either a response object or you must set a view handler!");
-                } else {
-                    $this->request->attributes->set("viewData",
-                        array_merge($this->request->attributes->get("viewData", []), (array)$controllerReturn));
-                    $this->setResponse($this->getViewHandler()->transform($this->request, $this->response));
-                }
+                $this->request->attributes->set(
+                    "viewData",
+                    array_merge($this->request->attributes->get("viewData", []), (array)$controllerReturn)
+                );
+                $this->setResponse($this->getIoHandler()->transform($this->request, $this->response));
             }
             $this->response->setStatusCode(200);
         } catch (\Exception $e) {
             try {
-                if ($this->getViewHandler() && method_exists($this->getViewHandler(), "handleException")) {
-                    try{
-                        $this->getViewHandler()->handleException($e);
-                    } catch (\Exception $e){
-                        $eolChar = php_sapi_name() == "cli" ? PHP_EOL : "</br>";
-                        $message = "Exit with code {$e->getCode()}: {$e->getMessage()}".$eolChar;
-                        $message .= "File: {$e->getFile()}, Line: {$e->getLine()}".$eolChar;
-                        $message .= "{$e->getCode()}".$eolChar;
-                        $message .= php_sapi_name() == "cli" ? $e->getTraceAsString() : nl2br($e->getTraceAsString());
-                        exit($message);
-                    }
-                } else {
-                    $this->getResponse()->setContent($e->getMessage() . "\n" . $e->getTraceAsString());
+                try{
+                    $this->getIoHandler()->handleException($e);
+                } catch (\Exception $e){
+                    $eolChar = php_sapi_name() == "cli" ? PHP_EOL : "</br>";
+                    $message = "Exit with code {$e->getCode()}: {$e->getMessage()}".$eolChar;
+                    $message .= "File: {$e->getFile()}, Line: {$e->getLine()}".$eolChar;
+                    $message .= "{$e->getCode()}".$eolChar;
+                    $message .= php_sapi_name() == "cli" ? $e->getTraceAsString() : nl2br($e->getTraceAsString());
+
+                    $this->getResponse()->setContent($message);
                     $this->getResponse()->setStatusCode($e->getCode());
                 }
-            } catch (\InvalidArgumentException $e) {
+            } catch (\InvalidArgumentException $e) { // convert codes that are not valid http response codes
                 $this->getResponse()->setStatusCode(400);
             }
         } finally {

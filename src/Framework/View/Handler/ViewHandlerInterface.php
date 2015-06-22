@@ -16,4 +16,6 @@ interface ViewHandlerInterface
      * @return Response
      */
     public function transform(Request $request, Response $response);
+
+    public function handleException(\Exception $e);
 }

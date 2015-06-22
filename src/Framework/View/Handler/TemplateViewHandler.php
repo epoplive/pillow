@@ -31,19 +31,19 @@ class TemplateViewHandler implements ViewHandlerInterface
 
 
     /**
-     * @param Request $request
      * @param Response $response
+     * @param array $data
      * @return Response
      * @throws \Exception
      */
-    public function transform(Request $request, Response $response){
+    public function transform(Response $response, Array $data = null){
         $route = $request->attributes->get("route");
         if(is_callable([$route, "getViewClass"]) && !empty($route->getViewClass())){
             $this->setTemplateClass($route->getViewClass());
         }
 
         if(!$this->getTemplate() instanceof TemplateViewInterface || $this->getTemplateClass() !== get_class($this->getTemplate())){
-            $this->template = new $this->templateClass();//$route ? $route->toArray() : []);
+            $this->template = new $this->templateClass();
         }
 
         if(!$this->template instanceof TemplateViewInterface){
