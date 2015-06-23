@@ -10,25 +10,17 @@ namespace Framework\View;
 
 use Framework\Collection\KeyValueCollection;
 use Framework\Collection\KeyValueObject;
-use Framework\View\Template\FileBasedTemplate;
-use Framework\View\Template\TemplateInterface;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
+use Framework\View\Renderer\FileRenderer;
 
-class View implements ViewInterface
+class TemplateView implements ViewInterface
 {
     /** @var  KeyValueCollection $templateRegistry */
     protected $templateRegistry;
-
     /** @var array $data */
     protected $data;
-
     /** @var  string $template */
     protected $template;  // this is the currently used template name registered in the registry, used internally
 
-    /**
-     * View constructor.
-     */
     public function __construct()
     {
         $this->templateRegistry = new KeyValueCollection();
@@ -55,37 +47,22 @@ class View implements ViewInterface
      * Registers a new template by alias in the registry for re-use
      * passing an alias will override the template's current alias
      *
-     * @param TemplateInterface $template
+     * @param mixed $template
      * @param $alias
      * @return TemplateInterface
+     * @throws \Exception
      */
-    public function registerTemplate(TemplateInterface $template, $alias = null)
+    public function registerTemplate($template, $alias)
     {
-        if($alias) {
-            $template->setAlias($alias);
+        if($this->getTemplateRegistry()->findIndexByKey($alias)) {
+            throw new \Exception("View template with this alias already registered!");
         }
-        $this->getTemplateRegistry()->add(new KeyValueObject($template->getAlias(), $template));
+        if(!$template instanceof \Closure) {
+            $renderer = new FileRenderer();
+            $template = $renderer->getRenderer();
+        }
+        $this->getTemplateRegistry()->add(new KeyValueObject($alias, $template));
         return $template;
-    }
-
-    /**
-     * @return TemplateInterface
-     */
-    public function getTemplate()
-    {
-        return $this->getTemplateRegistry()->getByKey($this->template);
-    }
-
-    public function setTemplate($input)
-    {
-        if($input instanceof TemplateInterface){
-            if(!$this->getTemplateRegistry()->getByValue($input)){
-                $template = $this->registerTemplate($input);
-            }
-        } else if(!$template = $this->getTemplateRegistry()->getByKey($input)){
-            $template = $this->registerTemplate(new FileBasedTemplate($input));
-        }
-        $this->template = $template->getAlias();
     }
 
     /**
@@ -103,18 +80,51 @@ class View implements ViewInterface
     public function render($template, Array $data = null)
     {
         $data = $data?: [];
-        if($template instanceof TemplateInterface) {
+        if($template instanceof \Closure) {
             $output = $template;
-        } else if(!$output = $this->getTemplate($template)){
-            $output = new FileBasedTemplate($template);
+        } else if(!$output = $this->getTemplateRegistry()->findIndexByKey($template)) {
+            $renderer = new FileRenderer();
+            $output = $renderer->getRenderer();
         }
-        return $output->render($data);
+        $output = \Closure::bind($output, $this);
+        return $output->__invoke($template, $data);
     }
 
+    /**
+     * @param \Exception $e
+     * @return string
+     */
     public function handleException(\Exception $e){
-        if(!$this->getTemplate() || !is_callable([$this->template, "handleException"])){
-            throw $e;
-        }
-        $this->template->handleException($e);
+        $eolChar = php_sapi_name() == "cli" ? PHP_EOL : "</br>";
+        $message = "Exit with code {$e->getCode()}: {$e->getMessage()}".$eolChar;
+        $message .= "File: {$e->getFile()}, Line: {$e->getLine()}".$eolChar;
+        $message .= "{$e->getCode()}".$eolChar;
+        $message .= php_sapi_name() == "cli" ? $e->getTraceAsString() : nl2br($e->getTraceAsString());
+
+        return $message;
     }
+
+    /**
+     * @return array
+     */
+    public function getData()
+    {
+        return $this->data;
+    }
+
+    /**
+     * @param array $data
+     */
+    public function setData(Array $data = null)
+    {
+        $this->data = $data;
+    }
+
+    public function updateData(Array $data = null)
+    {
+        foreach($data as $key => $value){
+            $this->data[$key] = $value;
+        }
+    }
+
 }

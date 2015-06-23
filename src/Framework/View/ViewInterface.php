@@ -29,4 +29,8 @@ interface ViewInterface
      * @throws \Exception
      */
     public function handleException(\Exception $e);
+
+    public function getData();
+    public function setData(Array $data = null);
+    public function updateData(Array $data);
 }

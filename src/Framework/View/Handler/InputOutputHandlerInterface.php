@@ -9,15 +9,24 @@
 namespace Framework\View\Handler;
 
 
+use Framework\View\ViewInterface;
+
 interface InputOutputHandlerInterface
 {
 
-    public function transform($input, $output);
+    /**
+     * @param $input
+     * @return $output
+     */
+    public function transform($input);
 
     /**
-     * @param \Exception $e
-     * @return mixed
-     * @throws \Exception
+     * @return ViewInterface
      */
-    public function handleException(\Exception $e);
+    public function getView();
+
+    /**
+     * @param ViewInterface $view
+     */
+    public function setView($view);
 }
