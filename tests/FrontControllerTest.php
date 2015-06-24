@@ -10,8 +10,11 @@ namespace pillow\tests;
 use Framework\Controller\ControllerInterface;
 use Framework\Controller\FrontController;
 use Framework\Request\Filter\FilterInterface;
+use Framework\View\Handler\HttpInputOutputHandler;
+use Framework\View\Handler\InputOutputHandlerInterface;
 use Framework\View\Handler\TemplateViewHandler;
 use Framework\View\Handler\ViewHandlerInterface;
+use Framework\View\TemplateView;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Framework\Route\Route;
@@ -26,29 +29,31 @@ class FrontControllerTest extends \PHPUnit_Framework_TestCase
         $fc = FrontController::getInstance();
         $fc->destroy();
         unset($fc);
-        FrontController::$routesFile = "/Some/Non-Existant/And/Definately/Fake/File.php";
+        HttpInputOutputHandler::$routesFile = "/Some/Non-Existant/And/Definately/Fake/File.php";
         $fc = FrontController::getInstance();
+        $fc->setIoHandler(new \Framework\View\Handler\HttpInputOutputHandler(new TemplateView()));
         $fc->destroy();
     }
 
     public function testHasRouteFile(){
-        FrontController::$routesFile = __DIR__."/Fixtures/routes.php";
+        HttpInputOutputHandler::$routesFile = __DIR__."/Fixtures/routes.php";
         $routes = include(__DIR__."/Fixtures/routes.php");
         $this->assertNotEmpty($routes);
         $fc = FrontController::getInstance();
-        $fcRoutes = $fc->getRoutes();
+        $fc->setIoHandler(new \Framework\View\Handler\HttpInputOutputHandler(new TemplateView()));
+        $fcRoutes = $fc->getIoHandler()->getRoutes();
         $this->assertEquals($routes, $fcRoutes);
         $fc->destroy();
     }
 
-    public function testGetSetViewHandler()
+    public function testGetSetIoHandler()
     {
         $fc = FrontController::getInstance();
-        $this->assertNull($fc->getViewHandler());
-        $viewHandler = $this->getMock(ViewHandlerInterface::class);
-        $this->assertNotNull($viewHandler);
-        $fc->setViewHandler($viewHandler);
-        $this->assertSame($viewHandler, $fc->getViewHandler());
+        $this->assertNull($fc->getIoHandler());
+        $ioHandler = $this->getMock(InputOutputHandlerInterface::class);
+        $this->assertNotNull($ioHandler);
+        $fc->setIoHandler($ioHandler);
+        $this->assertSame($ioHandler, $fc->getIoHandler());
         $fc->destroy();
     }
 
@@ -62,9 +67,10 @@ class FrontControllerTest extends \PHPUnit_Framework_TestCase
     }
 
     public function testExecute(){
-        FrontController::$routesFile = __DIR__."/Fixtures/routes.php";
+        HttpInputOutputHandler::$routesFile = __DIR__."/Fixtures/routes.php";
         $routes = include(__DIR__."/Fixtures/routes.php");
         $fc = FrontController::getInstance();
+        $fc->setIoHandler(new \Framework\View\Handler\HttpInputOutputHandler(new TemplateView()));
         $request = $this->getMock(Request::class);
         $response = $fc->execute($request);
         $this->assertTrue($response instanceof Response);
@@ -72,29 +78,31 @@ class FrontControllerTest extends \PHPUnit_Framework_TestCase
     }
 
     public function testAddRemoveFilter(){
-        FrontController::$routesFile = __DIR__."/Fixtures/routes.php";
+        HttpInputOutputHandler::$routesFile = __DIR__."/Fixtures/routes.php";
         $routes = include(__DIR__."/Fixtures/routes.php");
         $fc = FrontController::getInstance();
+        $fc->setIoHandler(new \Framework\View\Handler\HttpInputOutputHandler(new TemplateView()));
         $filter = $this->getMock(FilterInterface::class);
-        $this->assertEmpty($fc->getFilterChain()->getFilters());
-        $fc->addFilter($filter);
-        $this->assertEquals(1, count($fc->getFilterChain()->getFilters()));
+        $this->assertEmpty($fc->getIoHandler()->getFilterChain()->getFilters());
+        $fc->getIoHandler()->addFilter($filter);
+        $this->assertEquals(1, count($fc->getIoHandler()->getFilterChain()->getFilters()));
         $fc->destroy();
     }
 
     public function testGetSetRoute(){
-        FrontController::$routesFile = __DIR__."/Fixtures/routes.php";
+        HttpInputOutputHandler::$routesFile = __DIR__."/Fixtures/routes.php";
         $routes = include(__DIR__."/Fixtures/routes.php");
         $fc = FrontController::getInstance();
+        $fc->setIoHandler(new \Framework\View\Handler\HttpInputOutputHandler(new TemplateView()));
         $route = $this->getMock(Route::class);
-        $this->assertNull($fc->getRoute());
-        $fc->setRoute($route);
-        $this->assertSame($route, $fc->getRoute());
+        $this->assertNull($fc->getIoHandler()->getRoute());
+        $fc->getIoHandler()->setRoute($route);
+        $this->assertSame($route, $fc->getIoHandler()->getRoute());
         $fc->destroy();
     }
 
     public function testGetSetController(){
-        FrontController::$routesFile = __DIR__."/Fixtures/routes.php";
+        HttpInputOutputHandler::$routesFile = __DIR__."/Fixtures/routes.php";
         $routes = include(__DIR__."/Fixtures/routes.php");
         $fc = FrontController::getInstance();
         $controller = $this->getMock(ControllerInterface::class);
@@ -105,7 +113,7 @@ class FrontControllerTest extends \PHPUnit_Framework_TestCase
     }
 
     public function testGetSetRequest(){
-        FrontController::$routesFile = __DIR__."/Fixtures/routes.php";
+        HttpInputOutputHandler::$routesFile = __DIR__."/Fixtures/routes.php";
         $routes = include(__DIR__."/Fixtures/routes.php");
         $fc = FrontController::getInstance();
         $request = $this->getMock(Request::class);
@@ -115,7 +123,7 @@ class FrontControllerTest extends \PHPUnit_Framework_TestCase
     }
 
     public function testGetSetResponse(){
-        FrontController::$routesFile = __DIR__."/Fixtures/routes.php";
+        HttpInputOutputHandler::$routesFile = __DIR__."/Fixtures/routes.php";
         $routes = include(__DIR__."/Fixtures/routes.php");
         $fc = FrontController::getInstance();
         $response = $this->getMock(Response::class);

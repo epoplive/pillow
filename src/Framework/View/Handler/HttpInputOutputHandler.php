@@ -52,11 +52,13 @@ class HttpInputOutputHandler implements InputOutputHandlerInterface, FilterManag
         "OPTIONS",
     ];
 
+
+
     public function __construct(ViewInterface $view)
     {
         $this->setView($view);
         if (stream_resolve_include_path(static::$routesFile) === false) {
-            throw new \Exception("Unable to load routes file from include path.");
+            throw new \Exception("Unable to load routes file from include path.", 500);
         }
         $routes = include static::$routesFile;
         if (empty($routes)) {
