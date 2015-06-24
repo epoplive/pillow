@@ -19,6 +19,7 @@ use Framework\Route\Route;
 use Framework\View\ViewInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Framework\Controller\FrontController;
 
 class HttpInputOutputHandler implements InputOutputHandlerInterface, FilterManagerInterface
 {
@@ -150,6 +151,7 @@ class HttpInputOutputHandler implements InputOutputHandlerInterface, FilterManag
             if ($controllerReturn instanceof Response) {
                 $response = $controllerReturn;
             } else {
+                $this->getView()->updateData((array)$controllerReturn);
                 $response->setContent($this->getView()->render($this->route->getView(), $this->getView()->getData()));
                 $response->setStatusCode(200);
             }
@@ -207,7 +209,6 @@ class HttpInputOutputHandler implements InputOutputHandlerInterface, FilterManag
                 if (array_key_exists(strtoupper($request->getMethod()), $route["methods"])) {
                     if (is_array($route["methods"][strtoupper($request->getMethod())])) {
                         if (!isset($route["methods"][strtoupper($request->getMethod())]["action"])) {
-//                            throw new \Exception("Action not specified!");
                             $route["action"] = $request->getMethod() . "Action";
                         } else {
                             $route["action"] = $route["methods"][strtoupper($request->getMethod())]["action"];
@@ -216,7 +217,7 @@ class HttpInputOutputHandler implements InputOutputHandlerInterface, FilterManag
                         if (isset($route["methods"][strtoupper($request->getMethod())]["requestFilters"])) {
                             $reqFilter = $route["methods"][strtoupper($request->getMethod())]["requestFilters"];
                             if (is_callable($reqFilter)) {
-                                $out = $reqFilter($this);
+                                $out = $reqFilter(FrontController::getInstance());
                                 if (is_array($out)) {
                                     foreach ($out as $filterName) {
                                         if ($filterName instanceof FilterInterface) {
@@ -259,7 +260,6 @@ class HttpInputOutputHandler implements InputOutputHandlerInterface, FilterManag
 
                 break;
             default:
-                error_log(__METHOD__ . ":An unknown error has occurred!");
                 throw new \Exception("An unknown error has occurred!", 400);
         }
     }
