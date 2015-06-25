@@ -10,6 +10,7 @@ namespace Framework\View;
 
 use Framework\Collection\KeyValueCollection;
 use Framework\Collection\KeyValueObject;
+use Framework\Controller\FrontController;
 use Framework\View\Renderer\FileRenderer;
 
 class TemplateView implements ViewInterface
@@ -101,7 +102,7 @@ class TemplateView implements ViewInterface
         $message .= "{$e->getCode()}".$eolChar;
         $message .= php_sapi_name() == "cli" ? $e->getTraceAsString() : nl2br($e->getTraceAsString());
 
-        return $message;
+        FrontController::getInstance()->setResponse(new Response($message, 500));
     }
 
     /**

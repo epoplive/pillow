@@ -137,10 +137,10 @@ class HttpInputOutputHandler implements InputOutputHandlerInterface, FilterManag
             }
 
             $controller = new $controllerName($request);
+            FrontController::getInstance()->setController($controller);
             if (!method_exists($controller, $this->route->getAction())) {
                 throw new \Exception("Invalid controller method: {$this->route->getAction()}");
             }
-
             $reflection = new \ReflectionClass($controller);
             foreach ($reflection->getMethod($this->route->getAction())->getParameters() as $key => $param) {
                 if (property_exists($param, "name") && array_key_exists($param->name, (array)$this->route->getVars())) {
@@ -156,8 +156,9 @@ class HttpInputOutputHandler implements InputOutputHandlerInterface, FilterManag
                 $response->setStatusCode(200);
             }
         } catch(\Exception $e){
-            $response->setContent($this->getView()->handleException($e));
             try {
+                $this->getView()->handleException($e);
+                $response = FrontController::getInstance()->getResponse();
                 $response->setStatusCode($e->getCode());
             } catch (\InvalidArgumentException $e) {
                 $response->setStatusCode(500);

@@ -88,7 +88,7 @@ final class FrontController implements ControllerInterface
      */
     public function getView()
     {
-        return $this->getIoHandler()->getView();
+        return $this->getIoHandler() ? $this->getIoHandler()->getView() : null;
     }
 
     /**
