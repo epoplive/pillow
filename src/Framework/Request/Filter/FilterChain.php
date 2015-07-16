@@ -43,13 +43,17 @@ class FilterChain
      * @param Request $request
      */
     public function filterRequest(Request $request){
+        $exception = null;
         foreach($this->filters as $filter){
             /** @var FilterInterface $filter */
-            $filter->filterRequest($request);
-        }
-
-        if($this->target){
-            $this->target->filterRequest($request);
+            try {
+                $filter->filterRequest($request);
+                if($this->target){
+                    $this->target->filterRequest($request);
+                }
+            } catch (\Exception $e){
+                $exception = new \RuntimeException($e->getMessage(), $e->getCode(), $exception);
+            }
         }
     }
 
@@ -57,13 +61,17 @@ class FilterChain
      * @param Response $response
      */
     public function filterResponse(Response $response){
+        $exception = null;
         foreach($this->filters as $filter){
             /** @var FilterInterface $filter */
-            $filter->filterResponse($response);
-        }
-
-        if($this->target){
-            $this->target->filterResponse($response);
+            try {
+                $filter->filterResponse($response);
+                if($this->target){
+                    $this->target->filterResponse($response);
+                }
+            } catch (\Exception $e){
+                $exception = new \RuntimeException($e->getMessage(), $e->getCode(), $exception);
+            }
         }
     }
 

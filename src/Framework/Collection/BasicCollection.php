@@ -9,8 +9,20 @@ namespace Framework\Collection;
 
 class BasicCollection implements CollectionInterface
 {
-    protected $_collection = [];
-    protected $_position = 0;
+    protected $_collection;
+    protected $_position;
+
+    /**
+     * BasicCollection constructor.
+     *
+     * @param array $items
+     */
+    public function __construct(Array $collection = null)
+    {
+        $this->_collection = $collection ?: [];
+        $this->_position = 0;
+    }
+
 
     public function add($element)
     {
