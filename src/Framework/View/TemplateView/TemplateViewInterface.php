@@ -44,4 +44,15 @@ interface TemplateViewInterface
      * @return string
      */
     public function render($input = null);
+
+    /**
+     * Return the alias of the template
+     * @return string
+     */
+    public function getAlias();
+
+    /**
+     * @param string $alias
+     */
+    public function setAlias($alias);
 }

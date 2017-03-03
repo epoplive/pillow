@@ -39,7 +39,7 @@ abstract class AbstractBaseFileTemplateView extends AbstractBaseTemplateView
     }
 
     protected function loadTemplateFromFile(){
-        if(!file_exists(FrontController::getRootPath().$this->getTemplateFile())){
+        if(!file_exists($this->getTemplatePath())){
             throw new \Exception("Template file {$this->getTemplatePath()} not found!");
         }
         $this->template = file_get_contents($this->getTemplatePath());
@@ -50,13 +50,12 @@ abstract class AbstractBaseFileTemplateView extends AbstractBaseTemplateView
     }
 
     protected function renderScoped($file, $data = null){
-        $scope = function() {
+        $scope = function($input, $templateFile) {
             ob_start();
-            $input = func_get_arg(1);
-            $templateFile = func_get_arg(0);
             if(is_array($input)){
                 extract( $input );
             }
+
             if(!$realPath = stream_resolve_include_path($templateFile)){
                 throw new \Exception("Template file {$templateFile} not found!", 500);
             }

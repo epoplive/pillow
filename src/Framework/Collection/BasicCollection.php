@@ -6,7 +6,6 @@
 
 namespace Framework\Collection;
 
-
 class BasicCollection implements CollectionInterface
 {
     protected $_collection;

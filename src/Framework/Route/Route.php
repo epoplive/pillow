@@ -27,17 +27,17 @@ class Route
      * @param string $controller
      * @param string $action
      * @param string $viewClass
-     * @param string $templateFile
+     * @param string $view
      * @param null $vars
      */
-    public function __construct($uri = null, $method = null, $controller = null, $action = null, $viewClass = null, $templateFile = null, $vars = null)
+    public function __construct($uri = null, $method = null, $controller = null, $action = null, $viewClass = null, $view = null, $vars = null)
     {
         $this->uri = $uri ?: null;
         $this->method = $method ?: null;
         $this->controller = $controller ?: null;
         $this->action = $action ?: null;
         $this->viewClass = $viewClass ?: null;
-        $this->templateFile = $templateFile ?: null;
+        $this->view = $view ?: null;
         $this->vars = $vars ?: null;
     }
 
@@ -122,19 +122,19 @@ class Route
     }
 
     /**
-     * @return null
+     * @return string
      */
-    public function getTemplateFile()
+    public function getView()
     {
-        return $this->templateFile;
+        return $this->view;
     }
 
     /**
-     * @param null $templateFile
+     * @param string $view
      */
-    public function setTemplateFile($templateFile)
+    public function setView($view)
     {
-        $this->templateFile = $templateFile;
+        $this->view = $view;
     }
 
     /**
@@ -160,7 +160,7 @@ class Route
             "controller"        => $this->getController(),
             "action"            => $this->getAction(),
             "viewClass"         => $this->getViewClass(),
-            "templateFile"      => $this->getTemplateFile(),
+            "view"              => $this->getView(),
             "vars"              => $this->getVars(),
         ];
     }
